@@ -4,7 +4,7 @@ Shader "Lacuna/FastVoxelVolume"
     {
         [NoScaleOffset] _MainTex ("Voxel Bitmask", 3D) = "white" {}
         [NoScaleOffset] _ColourTex ("Voxel Colour", 3D) = "white" {}
-        [NoScaleOffset] _Udon_3DJ_Color("3DJ Colour", 2D) = "white" {}
+        [NoScaleOffset] _Udon_3DJ_Color ("3DJ Colour", 2D) = "white" {}
         [Enum(Voxel Colour, 0, Normal, 1, UV, 2, Mip Level, 3, Checkerboard, 4, Position, 5, 3DJ Projection, 6)] _RenderMode ("Render Mode", Integer) = 0
 
     }
@@ -74,7 +74,7 @@ Shader "Lacuna/FastVoxelVolume"
                 return o;
             }
 
-            uint encode(uint x, uint y, uint z)
+            uint encode (uint x, uint y, uint z)
             {
                 x = (x | (x << 16u)) & 0x030000FF;
                 x = (x | (x << 8u)) & 0x0300F00F;
@@ -94,7 +94,7 @@ Shader "Lacuna/FastVoxelVolume"
                 return x | (y << 1) | (z << 2);
             }
 
-            uint encode(uint3 xyz)
+            uint encode (uint3 xyz)
             {
                 return encode(xyz.x, xyz.y, xyz.z);
             }
@@ -158,7 +158,7 @@ Shader "Lacuna/FastVoxelVolume"
                 
                 // RUN OUR MAIN TRAVERSAL LOOP HERE
                 [loop]
-                while(true)
+                while (true)
                 {
                     if(any(coord > uint(_MainTex_TexelSize.z) - 1u)) return false;
 
@@ -217,7 +217,7 @@ Shader "Lacuna/FastVoxelVolume"
                 return false;
             }
 
-            float mip_map_level(in float2 texture_coordinate) // texture_coordinate = uv_MainTex * _MainTex_TexelSize.zw
+            float mip_map_level (in float2 texture_coordinate) // texture_coordinate = uv_MainTex * _MainTex_TexelSize.zw
             {
                 float2 dx_vtc = ddx(texture_coordinate);
                 float2 dy_vtc = ddy(texture_coordinate);
@@ -254,7 +254,7 @@ Shader "Lacuna/FastVoxelVolume"
                 float3 normal = -(int3)mask * sign(ray_direction);
                 float2 uv = mask.x == 1 ? hit_position.yz : mask.y == 1 ? hit_position.xz : hit_position.xy;
 
-                switch(_RenderMode)
+                switch (_RenderMode)
                 {
                     case 0: // Colour
                         return _ColourTex.Load(uint4(hit_coord, 0));
@@ -276,7 +276,7 @@ Shader "Lacuna/FastVoxelVolume"
                         return float4(hit_position, 0);
                     break;
                     case 6: // 3DJ
-                        switch(int(normal.x + normal.y * 2 + normal.z * 3))
+                        switch (int(normal.x + normal.y * 2 + normal.z * 3))
                         {
                             case -1: // -X Left
                                 return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.z, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy);
