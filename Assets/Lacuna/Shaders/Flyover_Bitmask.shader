@@ -257,110 +257,88 @@ Shader "Lacuna/Flyover_Bitmask"
                 max_vec = max(uint3(left_7, right_7, bottom_7), uint3(top_7, front_7, back_7));
                 max_dir = max(max_vec.x, max(max_vec.y, max_vec.z));
 
-                bits_z += max_dir == left_7   ? 0 :
+                bits_z += max_dir == front_7  ? 4 :
+                          max_dir == left_7   ? 0 :
                           max_dir == right_7  ? 1 :
-                          max_dir == bottom_7 ? 2 :
-                          max_dir == top_7    ? 3 :
-                          max_dir == front_7  ? 4 : 5;
+                          max_dir == back_7   ? 5 :
+                          max_dir == top_7    ? 4 : 2;
 
                 bits_z <<= 4;
 
                 max_vec = max(uint3(left_6, right_6, bottom_6), uint3(top_6, front_6, back_6));
                 max_dir = max(max_vec.x, max(max_vec.y, max_vec.z));
 
-                bits_z += max_dir == left_6   ? 0 :
+                bits_z += max_dir == front_6  ? 4 :
+                          max_dir == left_6   ? 0 :
                           max_dir == right_6  ? 1 :
-                          max_dir == bottom_6 ? 2 :
-                          max_dir == top_6    ? 3 :
-                          max_dir == front_6  ? 4 : 5;
+                          max_dir == back_6   ? 5 :
+                          max_dir == top_6    ? 4 : 2;
 
                 bits_z <<= 4;
 
                 max_vec = max(uint3(left_5, right_5, bottom_5), uint3(top_5, front_5, back_5));
                 max_dir = max(max_vec.x, max(max_vec.y, max_vec.z));
 
-                bits_z += max_dir == left_5   ? 0 :
+                bits_z += max_dir == front_5  ? 4 :
+                          max_dir == left_5   ? 0 :
                           max_dir == right_5  ? 1 :
-                          max_dir == bottom_5 ? 2 :
-                          max_dir == top_5    ? 3 :
-                          max_dir == front_5  ? 4 : 5;
+                          max_dir == back_5   ? 5 :
+                          max_dir == top_5    ? 4 : 2;
 
                 bits_z <<= 4;
 
                 max_vec = max(uint3(left_4, right_4, bottom_4), uint3(top_4, front_4, back_4));
                 max_dir = max(max_vec.x, max(max_vec.y, max_vec.z));
 
-                bits_z += max_dir == left_4   ? 0 :
+                bits_z += max_dir == front_4  ? 4 :
+                          max_dir == left_4   ? 0 :
                           max_dir == right_4  ? 1 :
-                          max_dir == bottom_4 ? 2 :
-                          max_dir == top_4    ? 3 :
-                          max_dir == front_4  ? 4 : 5;
-
-                bits_z <<= 4;
-
-                max_vec = max(uint3(left_5, right_5, bottom_5), uint3(top_5, front_5, back_5));
-                max_dir = max(max_vec.x, max(max_vec.y, max_vec.z));
-
-                bits_z += max_dir == left_5   ? 0 :
-                          max_dir == right_5  ? 1 :
-                          max_dir == bottom_5 ? 2 :
-                          max_dir == top_5    ? 3 :
-                          max_dir == front_5  ? 4 : 5;
-
-                bits_z <<= 4;
-
-                max_vec = max(uint3(left_4, right_4, bottom_4), uint3(top_4, front_4, back_4));
-                max_dir = max(max_vec.x, max(max_vec.y, max_vec.z));
-
-                bits_z += max_dir == left_4   ? 0 :
-                          max_dir == right_4  ? 1 :
-                          max_dir == bottom_4 ? 2 :
-                          max_dir == top_4    ? 3 :
-                          max_dir == front_4  ? 4 : 5;
+                          max_dir == back_4   ? 5 :
+                          max_dir == top_4    ? 4 : 2;
 
                 bits_z <<= 4;
 
                 max_vec = max(uint3(left_3, right_3, bottom_3), uint3(top_3, front_3, back_3));
                 max_dir = max(max_vec.x, max(max_vec.y, max_vec.z));
 
-                bits_z += max_dir == left_3   ? 0 :
+                bits_z += max_dir == front_3  ? 4 :
+                          max_dir == left_3   ? 0 :
                           max_dir == right_3  ? 1 :
-                          max_dir == bottom_3 ? 2 :
-                          max_dir == top_3    ? 3 :
-                          max_dir == front_3  ? 4 : 5;
+                          max_dir == back_3   ? 5 :
+                          max_dir == top_3    ? 4 : 2;
 
                 bits_z <<= 4;
 
                 max_vec = max(uint3(left_2, right_2, bottom_2), uint3(top_2, front_2, back_2));
                 max_dir = max(max_vec.x, max(max_vec.y, max_vec.z));
 
-                bits_z += max_dir == left_2   ? 0 :
+                bits_z += max_dir == front_2  ? 4 :
+                          max_dir == left_2   ? 0 :
                           max_dir == right_2  ? 1 :
-                          max_dir == bottom_2 ? 2 :
-                          max_dir == top_2    ? 3 :
-                          max_dir == front_2  ? 4 : 5;
+                          max_dir == back_2   ? 5 :
+                          max_dir == top_2    ? 4 : 2;
 
                 bits_z <<= 4;
 
                 max_vec = max(uint3(left_1, right_1, bottom_1), uint3(top_1, front_1, back_1));
                 max_dir = max(max_vec.x, max(max_vec.y, max_vec.z));
 
-                bits_z += max_dir == left_1   ? 0 :
+                bits_z += max_dir == front_1  ? 4 :
+                          max_dir == left_1   ? 0 :
                           max_dir == right_1  ? 1 :
-                          max_dir == bottom_1 ? 2 :
-                          max_dir == top_1    ? 3 :
-                          max_dir == front_1  ? 4 : 5;
+                          max_dir == back_1   ? 5 :
+                          max_dir == top_1    ? 4 : 2;
 
                 bits_z <<= 4;
 
                 max_vec = max(uint3(left_0, right_0, bottom_0), uint3(top_0, front_0, back_0));
                 max_dir = max(max_vec.x, max(max_vec.y, max_vec.z));
 
-                bits_z += max_dir == left_0   ? 0 :
+                bits_z += max_dir == front_0  ? 4 :
+                          max_dir == left_0   ? 0 :
                           max_dir == right_0  ? 1 :
-                          max_dir == bottom_0 ? 2 :
-                          max_dir == top_0    ? 3 :
-                          max_dir == front_0  ? 4 : 5;
+                          max_dir == back_0   ? 5 :
+                          max_dir == top_0    ? 4 : 2;
                 
                 return uint3(bits_x, bits_y, bits_z);
             }
