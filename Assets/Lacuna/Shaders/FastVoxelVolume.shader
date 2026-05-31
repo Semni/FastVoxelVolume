@@ -52,6 +52,7 @@ Shader "Lacuna/FastVoxelVolume"
             float4 _ColourTex_TexelSize;
 
             Texture2D _Udon_3DJ_Color;
+            SamplerState sampler_Udon_3DJ_Color;
             SamplerState _linear_clamp_sampler;
             float4 _Udon_3DJ_Color_TexelSize;
 
@@ -257,27 +258,28 @@ Shader "Lacuna/FastVoxelVolume"
                 switch (_RenderMode)
                 {
                     case 0: // Colour
-                        return _ColourTex.Load(uint4(hit_coord, 0));
+                        return _ColourTex.Load(uint4(hit_coord, 1));
                     break;
                     case 1: //Normal
-                        return float4(max(normal.xyz, 0) - min(normal.yxz + normal.zyx, 0), 0);
+                        return float4(max(normal.xyz, 0) - min(normal.yxz + normal.zyx, 0), 1);
                     break;
                     case 2: // UV
-                        return float4(uv, 0, 0);
+                        return float4(uv, 0, 1);
                     break;
                     case 3: // Mip stuff
                         float miplevel = mip_map_level(hit_position * _MainTex_TexelSize.zw * 4);
-                        return float4(1 - saturate(miplevel), 1 - saturate(-miplevel), 0, 0);
+                        return float4(1 - saturate(miplevel), 1 - saturate(-miplevel), 0, 1);
                     break;
                     case 4: // Checkerboard pattern.
                         return ((hit_coord.x ^ hit_coord.y ^ hit_coord.z) & 1);
                     break;
                     case 5: // Position
-                        return float4(hit_position, 0);
+                        return float4(hit_position, 1);
                     break;
                     case 6: // 3DJ
                         switch (int(normal.x + normal.y * 2 + normal.z * 3))
                         {
+
                             case -1: // -X Left
                                 return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.z, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy);
                             break;
@@ -291,39 +293,9 @@ Shader "Lacuna/FastVoxelVolume"
                                 return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 530) * _Udon_3DJ_Color_TexelSize.xy);
                             break;
                             case -3: // -Z Front
-                                //return float4(1, 0, 0, 0);
-                                return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, hit_position.xy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(0, 530) * _Udon_3DJ_Color_TexelSize.xy);
+                                return _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, hit_position.xy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(0, 530) * _Udon_3DJ_Color_TexelSize.xy);
                             break;
                             case 3: // +Z Back
-                                return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 0) * _Udon_3DJ_Color_TexelSize.xy);
-                            break;
-                        }
-                        //return normal.y;
-                    break;
-                    case 7:
-                        uint sampledir = asuint(_MainTex.Load(uint4(hit_coord >> 2, 0))).z >> (encode((hit_coord & 3) >> 1) * 4);
-                        //uint sampledir = asuint(_MainTex.Load(uint4(hit_coord >> 2, 0))).z;
-
-                        // 0 Left, 1 Right, 2 Bottom, 3 Top, 4 Front, 5 Back
-                        switch (sampledir & ((1 << 4) - 1))
-                        {
-                            case 0: // -X Left
-                                return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.z, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy);
-                            break;
-                            case 1: // +X Right
-                                return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, hit_position.zy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 0) * _Udon_3DJ_Color_TexelSize.xy);
-                            break;
-                            case 2: // -Y Bottom
-                                return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy);
-                            break;
-                            case 3: // +Y Top
-                                return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 530) * _Udon_3DJ_Color_TexelSize.xy);
-                            break;
-                            case 4: // -Z Front
-                                return float4(1, 0, 0, 0);
-                                return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, hit_position.xy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(0, 530) * _Udon_3DJ_Color_TexelSize.xy);
-                            break;
-                            case 5: // +Z Back
                                 return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 0) * _Udon_3DJ_Color_TexelSize.xy);
                             break;
                             default:
@@ -333,7 +305,7 @@ Shader "Lacuna/FastVoxelVolume"
                 }
 
                 // If this happens something has gone wrong.
-                return float4(1, 0, 1, 0);
+                return float4(1, 0, 1, 1);
             }
             ENDCG
         }
