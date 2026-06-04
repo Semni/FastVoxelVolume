@@ -3,9 +3,9 @@ Shader "Lacuna/FastVoxelVolume"
     Properties
     {
         [NoScaleOffset] _MainTex ("Voxel Bitmask", 3D) = "white" {}
-        [NoScaleOffset] _ColourTex ("Voxel Colour", 3D) = "white" {}
+        //[NoScaleOffset] _ColourTex ("Voxel Colour", 3D) = "white" {}
         [NoScaleOffset] _Udon_3DJ_Color ("3DJ Colour", 2D) = "white" {}
-        [Enum(Voxel Colour, 0, Normal, 1, UV, 2, Mip Level, 3, Checkerboard, 4, Position, 5, 3DJ, 6)] _RenderMode ("Render Mode", Integer) = 0
+        [Enum(3DJ Colour Mix, 0, Normal, 1, UV, 2, Mip Level, 3, Checkerboard, 4, Position, 5, 3DJ Preferred Direction, 6)] _RenderMode ("Render Mode", Integer) = 0
 
     }
     SubShader
@@ -48,8 +48,8 @@ Shader "Lacuna/FastVoxelVolume"
             UNITY_DECLARE_TEX3D(_MainTex);
             float4 _MainTex_TexelSize;
 
-            UNITY_DECLARE_TEX3D(_ColourTex);
-            float4 _ColourTex_TexelSize;
+            //UNITY_DECLARE_TEX3D(_ColourTex);
+            //float4 _ColourTex_TexelSize;
 
             Texture2D _Udon_3DJ_Color;
             SamplerState sampler_Udon_3DJ_Color;
@@ -258,10 +258,10 @@ Shader "Lacuna/FastVoxelVolume"
                 switch (_RenderMode)
                 {
                     case 0: // Colour
-                        return _ColourTex.Load(uint4(hit_coord, 1));
+                        //return _ColourTex.Load(uint4(hit_coord, 1));
                     break;
                     case 1: //Normal
-                        return dot(normal, -ray_direction);
+                        //return dot(normal, -ray_direction);
                         return float4(max(normal.xyz, 0) - min(normal.yxz + normal.zyx, 0), 1);
                     break;
                     case 2: // UV
@@ -278,31 +278,69 @@ Shader "Lacuna/FastVoxelVolume"
                         return float4(hit_position, 1);
                     break;
                     case 6: // 3DJ
-                        uint2 bitmask = asuint(_MainTex.Load(uint4(hit_coord, 0)).zw);
+                        uint2 bitmask = asuint(_MainTex.Load(uint4(hit_coord >> 2, 0)).zw);
                         int n = encode((hit_coord & 3) >> 1) * 8;
-                        
-                        //if((n < 32) ? (bitmask.x & (1u << n)) : (bitmask.y & (1u << (n - 32))))
+
+                        //hit_position += float3(0.5 * 0.25, 0.5 * 0.25, 0.5 * 0.25) * _MainTex_TexelSize.x;
+
+                        //(hit_coord * _MainTex_TexelSize.z)
+                        hit_position = hit_coord * _MainTex_TexelSize.x * 0.25;
 
                         switch (int(normal.x + normal.y * 2 + normal.z * 3))
                         {
                             case -1: // -X Left
-                                //return float4(1, 0, 0, 1);
-                                return (n < 32) ? (bitmask.x & (1u << n)) : (bitmask.y & (1u << (n - 32))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.z, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : float4(1, 0, 1, 1);
+                                return ((n < 32) ? (bitmask.x & (1u << n)) : (bitmask.y & (1u << (n - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.z, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 5) < 32) ? (bitmask.x & (1u << (n + 5))) : (bitmask.y & (1u << ((n + 5) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 0) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 4) < 32) ? (bitmask.x & (1u << (n + 4))) : (bitmask.y & (1u << ((n + 4) - 32)))) ? _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, hit_position.xy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(0, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 3) < 32) ? (bitmask.x & (1u << (n + 3))) : (bitmask.y & (1u << ((n + 3) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 2) < 32) ? (bitmask.x & (1u << (n + 2))) : (bitmask.y & (1u << ((n + 2) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 1) < 32) ? (bitmask.x & (1u << (n + 1))) : (bitmask.y & (1u << ((n + 1) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, hit_position.zy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 0) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    float4(1, 0, 1, 1);
                             break;
                             case 1: // +X Right
-                                return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, hit_position.zy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 0) * _Udon_3DJ_Color_TexelSize.xy);
+                                return (((n + 1) < 32) ? (bitmask.x & (1u << (n + 1))) : (bitmask.y & (1u << ((n + 1) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, hit_position.zy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 0) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 5) < 32) ? (bitmask.x & (1u << (n + 5))) : (bitmask.y & (1u << ((n + 5) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 0) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 4) < 32) ? (bitmask.x & (1u << (n + 4))) : (bitmask.y & (1u << ((n + 4) - 32)))) ? _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, hit_position.xy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(0, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 3) < 32) ? (bitmask.x & (1u << (n + 3))) : (bitmask.y & (1u << ((n + 3) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 2) < 32) ? (bitmask.x & (1u << (n + 2))) : (bitmask.y & (1u << ((n + 2) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    ((n < 32) ? (bitmask.x & (1u << n)) : (bitmask.y & (1u << (n - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.z, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    float4(1, 0, 1, 1);
                             break;
                             case -2: // -Y Bottom
-                                return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy);
+                                return (((n + 2) < 32) ? (bitmask.x & (1u << (n + 2))) : (bitmask.y & (1u << ((n + 2) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 5) < 32) ? (bitmask.x & (1u << (n + 5))) : (bitmask.y & (1u << ((n + 5) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 0) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 4) < 32) ? (bitmask.x & (1u << (n + 4))) : (bitmask.y & (1u << ((n + 4) - 32)))) ? _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, hit_position.xy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(0, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 1) < 32) ? (bitmask.x & (1u << (n + 1))) : (bitmask.y & (1u << ((n + 1) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, hit_position.zy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 0) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    ((n < 32) ? (bitmask.x & (1u << n)) : (bitmask.y & (1u << (n - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.z, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 3) < 32) ? (bitmask.x & (1u << (n + 3))) : (bitmask.y & (1u << ((n + 3) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    float4(1, 0, 1, 1);
                             break;
                             case 2: // +Y Top
-                                return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 530) * _Udon_3DJ_Color_TexelSize.xy);
+                                return (((n + 3) < 32) ? (bitmask.x & (1u << (n + 3))) : (bitmask.y & (1u << ((n + 3) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 5) < 32) ? (bitmask.x & (1u << (n + 5))) : (bitmask.y & (1u << ((n + 5) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 0) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 4) < 32) ? (bitmask.x & (1u << (n + 4))) : (bitmask.y & (1u << ((n + 4) - 32)))) ? _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, hit_position.xy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(0, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 1) < 32) ? (bitmask.x & (1u << (n + 1))) : (bitmask.y & (1u << ((n + 1) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, hit_position.zy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 0) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    ((n < 32) ? (bitmask.x & (1u << n)) : (bitmask.y & (1u << (n - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.z, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 2) < 32) ? (bitmask.x & (1u << (n + 2))) : (bitmask.y & (1u << ((n + 2) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    float4(1, 0, 1, 1);
                             break;
                             case -3: // -Z Front
-                                return _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, hit_position.xy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(0, 530) * _Udon_3DJ_Color_TexelSize.xy);
+                                return (((n + 4) < 32) ? (bitmask.x & (1u << (n + 4))) : (bitmask.y & (1u << ((n + 4) - 32)))) ? _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, hit_position.xy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(0, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 1) < 32) ? (bitmask.x & (1u << (n + 1))) : (bitmask.y & (1u << ((n + 1) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, hit_position.zy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 0) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    ((n < 32) ? (bitmask.x & (1u << n)) : (bitmask.y & (1u << (n - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.z, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 3) < 32) ? (bitmask.x & (1u << (n + 3))) : (bitmask.y & (1u << ((n + 3) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 2) < 32) ? (bitmask.x & (1u << (n + 2))) : (bitmask.y & (1u << ((n + 2) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 5) < 32) ? (bitmask.x & (1u << (n + 5))) : (bitmask.y & (1u << ((n + 5) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 0) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    float4(1, 0, 1, 1);
                             break;
                             case 3: // +Z Back
-                                return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 0) * _Udon_3DJ_Color_TexelSize.xy);
+                                return (((n + 5) < 32) ? (bitmask.x & (1u << (n + 5))) : (bitmask.y & (1u << ((n + 5) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 0) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 1) < 32) ? (bitmask.x & (1u << (n + 1))) : (bitmask.y & (1u << ((n + 1) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, hit_position.zy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 0) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    ((n < 32) ? (bitmask.x & (1u << n)) : (bitmask.y & (1u << (n - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.z, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 3) < 32) ? (bitmask.x & (1u << (n + 3))) : (bitmask.y & (1u << ((n + 3) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(640, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 2) < 32) ? (bitmask.x & (1u << (n + 2))) : (bitmask.y & (1u << ((n + 2) - 32)))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(hit_position.x, 1. - hit_position.z) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    (((n + 4) < 32) ? (bitmask.x & (1u << (n + 4))) : (bitmask.y & (1u << ((n + 4) - 32)))) ? _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, hit_position.xy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(0, 530) * _Udon_3DJ_Color_TexelSize.xy) : 
+                                    float4(1, 0, 1, 1);
                             break;
                             default:
                             break;

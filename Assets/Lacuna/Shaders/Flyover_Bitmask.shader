@@ -52,14 +52,16 @@ Shader "Lacuna/Flyover_Bitmask"
 
             void insert (uint n, inout uint low, inout uint high)
             {
-                if(n < 32)
+                low |= n < 32 ? 1u << n : 0u;
+                high |= n >= 32 && n < 64 ? 1u << (n - 32) : 0u;
+                /*if(n < 32)
                 {
                     low = low | 1u << n;
                 }
                 else if(n < 64)
                 {
                     high = high | 1u << (n - 32);
-                }
+                }*/
             }
 
             float SobelDepth(float ldc, float ldl, float ldr, float ldu, float ldd)
@@ -86,7 +88,7 @@ Shader "Lacuna/Flyover_Bitmask"
                 // Prepare the data structure...
                 // Each 4x4x4 texel "brick" is packed into four 32 bit unsigned integers
                 // The first 64 bits are a bitmask representing occupied voxels
-                // The next 32 bits represent a preferred sampling direction for 8 2x2x2 quads
+                // The last 64 bits are a bitmask representing the direction of visibility for 8 2x2x2 quads
                 uint bits_x = 0;
                 uint bits_y = 0;
                 uint bits_z = 0;
@@ -136,14 +138,14 @@ Shader "Lacuna/Flyover_Bitmask"
                             bool front_depth_texel_flag = front_depth_texel_sobel < _SobelSensitivity && front_depth_texel > _SampleThreshold && distance(1. - sampleTexcoord.z, front_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
                             bool back_depth_texel_flag = back_depth_texel_sobel < _SobelSensitivity && back_depth_texel > _SampleThreshold && distance(sampleTexcoord.z, back_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
 
-                            int i = encode(x >> 1, y >> 1, z >> 1) * 8;
+                            uint i = encode(x >> 1, y >> 1, z >> 1) * 8;
 
-                            if (left_depth_texel_flag) insert(1u << i, bits_z, bits_w);
-                            if (right_depth_texel_flag) insert(1u << (i + 1), bits_z, bits_w);
-                            if (bottom_depth_texel_flag) insert(1u << (i + 2), bits_z, bits_w);
-                            if (top_depth_texel_flag) insert(1u << (i + 3), bits_z, bits_w);
-                            if (front_depth_texel_flag) insert(1u << (i + 4), bits_z, bits_w);
-                            if (back_depth_texel_flag) insert(1u << (i + 5), bits_z, bits_w);
+                            if (left_depth_texel_flag) insert(i, bits_z, bits_w);
+                            if (right_depth_texel_flag) insert(i + 1, bits_z, bits_w);
+                            if (bottom_depth_texel_flag) insert(i + 2, bits_z, bits_w);
+                            if (top_depth_texel_flag) insert(i + 3, bits_z, bits_w);
+                            if (front_depth_texel_flag) insert(i + 4, bits_z, bits_w);
+                            if (back_depth_texel_flag) insert(i + 5, bits_z, bits_w);
 
 
                             if(left_depth_texel_flag || right_depth_texel_flag || bottom_depth_texel_flag || top_depth_texel_flag || front_depth_texel_flag || back_depth_texel_flag)
