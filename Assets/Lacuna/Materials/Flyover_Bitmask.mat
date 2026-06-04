@@ -78,10 +78,12 @@ Material:
     - _Parallax: 0.02
     - _SampleThreshold: 0.1
     - _SmoothnessTextureChannel: 0
+    - _SobelOffset: 1
+    - _SobelSensitivity: 0.1
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
-    - _VoxelSensitivity: 0.4
+    - _VoxelSensitivity: 0.5
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

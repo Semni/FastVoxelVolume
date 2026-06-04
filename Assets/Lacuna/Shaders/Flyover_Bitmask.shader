@@ -3,6 +3,8 @@ Shader "Lacuna/Flyover_Bitmask"
     Properties
     {
         [NoScaleOffset] _Udon_3DJ_Depth ("3DJ Depth", 2D) = "white" {}
+        _SobelOffset("Sobel Filter Width", Range(0.5, 2.0)) = 1.0
+        _SobelSensitivity("Sobel Filter Sensitivity", Range(0.01, 0.2)) = 0.1
         _VoxelSensitivity ("Voxel Sensitivity", Range(0.25, 4)) = 1.0
         _SampleThreshold ("Sampling Threshold", Range(0, 1)) = 0.1
     }
@@ -23,6 +25,8 @@ Shader "Lacuna/Flyover_Bitmask"
             SamplerState _linear_clamp_sampler;
             float4 _Udon_3DJ_Depth_TexelSize;
 
+            float _SobelOffset;
+            float _SobelSensitivity;
             float _VoxelSensitivity;
             float _SampleThreshold;
 
@@ -58,7 +62,26 @@ Shader "Lacuna/Flyover_Bitmask"
                 }
             }
 
-            uint2 frag (v2f_customrendertexture IN) : SV_Target
+            float SobelDepth(float ldc, float ldl, float ldr, float ldu, float ldd)
+            {
+                return abs(ldl - ldc) +
+                    abs(ldr - ldc) +
+                    abs(ldu - ldc) +
+                    abs(ldd - ldc);
+            }
+
+            float SobelSampleDepth(Texture2D t, SamplerState s, float2 uv, float3 offset)
+            {
+                float pixelCenter = t.Sample(s, uv).r;
+                float pixelLeft = t.Sample(s, uv - offset.xz).r;
+                float pixelRight = t.Sample(s, uv + offset.xz).r;
+                float pixelUp = t.Sample(s, uv + offset.zy).r;
+                float pixelDown = t.Sample(s, uv - offset.zy).r;
+
+                return SobelDepth(pixelCenter, pixelLeft, pixelRight, pixelUp, pixelDown);
+            }
+
+            uint4 frag (v2f_customrendertexture IN) : SV_Target
             {
                 // Prepare the data structure...
                 // Each 4x4x4 texel "brick" is packed into four 32 bit unsigned integers
@@ -66,6 +89,8 @@ Shader "Lacuna/Flyover_Bitmask"
                 // The next 32 bits represent a preferred sampling direction for 8 2x2x2 quads
                 uint bits_x = 0;
                 uint bits_y = 0;
+                uint bits_z = 0;
+                uint bits_w = 0;
 
                 // The source 3D texture is assumed to be 4x the render texture
                 // The dimensions of the render texture must be a power of 2
@@ -73,21 +98,7 @@ Shader "Lacuna/Flyover_Bitmask"
                 // Getting this wrong would be Very Bad™
                 float inv_CustomRenderTexture_TexelSize = (1. / (_CustomRenderTextureWidth * 4));
 
-                float3 sampleTexcoord;
-
-                float left_depth_texel;
-                float right_depth_texel;
-                float bottom_depth_texel;
-                float top_depth_texel;
-                float front_depth_texel;
-                float back_depth_texel;
-
-                bool left_depth_texel_flag;
-                bool right_depth_texel_flag;
-                bool bottom_depth_texel_flag;
-                bool top_depth_texel_flag;
-                bool front_depth_texel_flag;
-                bool back_depth_texel_flag;
+                float3 offset = float3(_Udon_3DJ_Depth_TexelSize.xy, 0) * _SobelOffset;
 
                 // Now we step through our voxels
                 [unroll]
@@ -95,27 +106,51 @@ Shader "Lacuna/Flyover_Bitmask"
                     for (uint y = 0; y < 4; y++)
                         for (uint z = 0; z < 4; z++)
                         {
-                            sampleTexcoord = IN.localTexcoord.xyz + float3(x - 0.5, y - 0.5, z - 0.5) * inv_CustomRenderTexture_TexelSize;
+                            float3 sampleTexcoord = IN.localTexcoord.xyz + float3(x - 0.5, y - 0.5, z - 0.5) * inv_CustomRenderTexture_TexelSize;
 
-                            left_depth_texel = _Udon_3DJ_Depth.Sample(sampler_Udon_3DJ_Depth, float2(1. - sampleTexcoord.z, sampleTexcoord.y) * float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy, 0).r; // -X Left
-                            right_depth_texel = _Udon_3DJ_Depth.Sample(sampler_Udon_3DJ_Depth, sampleTexcoord.zy * float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy + float2(320, 0) * _Udon_3DJ_Depth_TexelSize.xy).r; // +X Right
-                            bottom_depth_texel = _Udon_3DJ_Depth.Sample(sampler_Udon_3DJ_Depth, float2(sampleTexcoord.x, 1. - sampleTexcoord.z) * float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy).r; // -Y Bottom
-                            top_depth_texel = _Udon_3DJ_Depth.Sample(sampler_Udon_3DJ_Depth, float2(1. - sampleTexcoord.x, 1. - sampleTexcoord.z) * float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy + float2(640, 530) * _Udon_3DJ_Depth_TexelSize.xy).r; // +Y Top
-                            front_depth_texel = _Udon_3DJ_Depth.Sample(sampler_Udon_3DJ_Depth, sampleTexcoord.xy * float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy + float2(0, 530) * _Udon_3DJ_Depth_TexelSize.xy).r; // -Z Front
-                            back_depth_texel = _Udon_3DJ_Depth.Sample(sampler_Udon_3DJ_Depth, float2(1. - sampleTexcoord.x, sampleTexcoord.y) * float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy + float2(640, 0) * _Udon_3DJ_Depth_TexelSize.xy).r; // +Z Back
+                            float2 leftTexcoord = float2(1. - sampleTexcoord.z, sampleTexcoord.y) * float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy;
+                            float2 rightTexcoord = sampleTexcoord.zy * float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy + float2(320, 0) * _Udon_3DJ_Depth_TexelSize.xy;
+                            float2 bottomTexcoord = float2(sampleTexcoord.x, 1. - sampleTexcoord.z) * float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy;
+                            float2 topTexcoord = float2(1. - sampleTexcoord.x, 1. - sampleTexcoord.z) * float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy + float2(640, 530) * _Udon_3DJ_Depth_TexelSize.xy;
+                            float2 frontTexcoord = sampleTexcoord.xy * float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy + float2(0, 530) * _Udon_3DJ_Depth_TexelSize.xy;
+                            float2 backTexcoord = float2(1. - sampleTexcoord.x, sampleTexcoord.y) * float2(320, 530) * _Udon_3DJ_Depth_TexelSize.xy + float2(640, 0) * _Udon_3DJ_Depth_TexelSize.xy;
 
-                            left_depth_texel_flag = left_depth_texel > _SampleThreshold && distance(1. - sampleTexcoord.x, left_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
-                            right_depth_texel_flag = right_depth_texel > _SampleThreshold && distance(sampleTexcoord.x, right_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
-                            bottom_depth_texel_flag = bottom_depth_texel > _SampleThreshold && distance(1. - sampleTexcoord.y, bottom_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
-                            top_depth_texel_flag = top_depth_texel > _SampleThreshold && distance(sampleTexcoord.y, top_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
-                            front_depth_texel_flag = front_depth_texel > _SampleThreshold && distance(1. - sampleTexcoord.z, front_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
-                            back_depth_texel_flag = back_depth_texel > _SampleThreshold && distance(sampleTexcoord.z, back_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
+                            float left_depth_texel = _Udon_3DJ_Depth.Sample(_linear_clamp_sampler, leftTexcoord).r; // -X Left
+                            float right_depth_texel = _Udon_3DJ_Depth.Sample(_linear_clamp_sampler, rightTexcoord).r; // +X Right
+                            float bottom_depth_texel = _Udon_3DJ_Depth.Sample(_linear_clamp_sampler, bottomTexcoord).r; // -Y Bottom
+                            float top_depth_texel = _Udon_3DJ_Depth.Sample(_linear_clamp_sampler, topTexcoord).r; // +Y Top
+                            float front_depth_texel = _Udon_3DJ_Depth.Sample(_linear_clamp_sampler, frontTexcoord).r; // -Z Front
+                            float back_depth_texel = _Udon_3DJ_Depth.Sample(_linear_clamp_sampler, backTexcoord).r; // +Z Back
+
+                            float left_depth_texel_sobel = SobelSampleDepth(_Udon_3DJ_Depth, _linear_clamp_sampler, leftTexcoord, offset); // -X Left
+                            float right_depth_texel_sobel = SobelSampleDepth(_Udon_3DJ_Depth, _linear_clamp_sampler, rightTexcoord, offset); // +X Right
+                            float bottom_depth_texel_sobel = SobelSampleDepth(_Udon_3DJ_Depth, _linear_clamp_sampler, bottomTexcoord, offset); // -Y Bottom
+                            float top_depth_texel_sobel = SobelSampleDepth(_Udon_3DJ_Depth, _linear_clamp_sampler, topTexcoord, offset); // +Y Top
+                            float front_depth_texel_sobel = SobelSampleDepth(_Udon_3DJ_Depth, _linear_clamp_sampler, frontTexcoord, offset); // -Z Front
+                            float back_depth_texel_sobel = SobelSampleDepth(_Udon_3DJ_Depth, _linear_clamp_sampler, backTexcoord, offset); // +Z Back
+
+                            bool left_depth_texel_flag = left_depth_texel_sobel < _SobelSensitivity && left_depth_texel > _SampleThreshold && distance(1. - sampleTexcoord.x, left_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
+                            bool right_depth_texel_flag = right_depth_texel_sobel < _SobelSensitivity && right_depth_texel > _SampleThreshold && distance(sampleTexcoord.x, right_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
+                            bool bottom_depth_texel_flag = bottom_depth_texel_sobel < _SobelSensitivity && bottom_depth_texel > _SampleThreshold && distance(1. - sampleTexcoord.y, bottom_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
+                            bool top_depth_texel_flag = top_depth_texel_sobel < _SobelSensitivity && top_depth_texel > _SampleThreshold && distance(sampleTexcoord.y, top_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
+                            bool front_depth_texel_flag = front_depth_texel_sobel < _SobelSensitivity && front_depth_texel > _SampleThreshold && distance(1. - sampleTexcoord.z, front_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
+                            bool back_depth_texel_flag = back_depth_texel_sobel < _SobelSensitivity && back_depth_texel > _SampleThreshold && distance(sampleTexcoord.z, back_depth_texel) <= inv_CustomRenderTexture_TexelSize * _VoxelSensitivity;
+
+                            int i = encode(x >> 1, y >> 1, z >> 1) * 8;
+
+                            if (left_depth_texel_flag) insert(1u << i, bits_z, bits_w);
+                            if (right_depth_texel_flag) insert(1u << (i + 1), bits_z, bits_w);
+                            if (bottom_depth_texel_flag) insert(1u << (i + 2), bits_z, bits_w);
+                            if (top_depth_texel_flag) insert(1u << (i + 3), bits_z, bits_w);
+                            if (front_depth_texel_flag) insert(1u << (i + 4), bits_z, bits_w);
+                            if (back_depth_texel_flag) insert(1u << (i + 5), bits_z, bits_w);
+
 
                             if(left_depth_texel_flag || right_depth_texel_flag || bottom_depth_texel_flag || top_depth_texel_flag || front_depth_texel_flag || back_depth_texel_flag)
                                 insert(encode(x, y, z), bits_x, bits_y);
                         }
                 
-                return uint2(bits_x, bits_y);
+                return uint4(bits_x, bits_y, bits_z, bits_w);
             }
             ENDHLSL
         }

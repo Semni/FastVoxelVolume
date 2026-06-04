@@ -261,6 +261,7 @@ Shader "Lacuna/FastVoxelVolume"
                         return _ColourTex.Load(uint4(hit_coord, 1));
                     break;
                     case 1: //Normal
+                        return dot(normal, -ray_direction);
                         return float4(max(normal.xyz, 0) - min(normal.yxz + normal.zyx, 0), 1);
                     break;
                     case 2: // UV
@@ -277,11 +278,16 @@ Shader "Lacuna/FastVoxelVolume"
                         return float4(hit_position, 1);
                     break;
                     case 6: // 3DJ
+                        uint2 bitmask = asuint(_MainTex.Load(uint4(hit_coord, 0)).zw);
+                        int n = encode((hit_coord & 3) >> 1) * 8;
+                        
+                        //if((n < 32) ? (bitmask.x & (1u << n)) : (bitmask.y & (1u << (n - 32))))
+
                         switch (int(normal.x + normal.y * 2 + normal.z * 3))
                         {
-
                             case -1: // -X Left
-                                return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.z, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy);
+                                //return float4(1, 0, 0, 1);
+                                return (n < 32) ? (bitmask.x & (1u << n)) : (bitmask.y & (1u << (n - 32))) ? _Udon_3DJ_Color.Sample(_linear_clamp_sampler, float2(1. - hit_position.z, hit_position.y) * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy) : float4(1, 0, 1, 1);
                             break;
                             case 1: // +X Right
                                 return _Udon_3DJ_Color.Sample(_linear_clamp_sampler, hit_position.zy * float2(320, 530) * _Udon_3DJ_Color_TexelSize.xy + float2(320, 0) * _Udon_3DJ_Color_TexelSize.xy);
