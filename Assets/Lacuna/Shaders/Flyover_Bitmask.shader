@@ -29,6 +29,7 @@ Shader "Lacuna/Flyover_Bitmask"
             float _SobelSensitivity;
             float _VoxelSensitivity;
             float _SampleThreshold;
+            
 
             uint encode (uint x, uint y, uint z)
             {

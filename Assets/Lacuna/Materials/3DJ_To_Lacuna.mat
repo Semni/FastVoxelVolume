@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Flyover_Bitmask
-  m_Shader: {fileID: 4800000, guid: fa03d8104d9b28e418b22fb8ab58c5c2, type: 3}
+  m_Name: 3DJ_To_Lacuna
+  m_Shader: {fileID: 4800000, guid: db0e71125166b1b40b52fa93e8b90819, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -59,12 +59,15 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Udon_3DJ_Color:
+        m_Texture: {fileID: 2800000, guid: 1683cf2bf9faecc418a494725885eb9c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Udon_3DJ_Depth:
         m_Texture: {fileID: 2800000, guid: 81aa7c4b308de764e82f0ef87738aed1, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    m_Ints:
-    - _RenderMode: 0
+    m_Ints: []
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
@@ -77,14 +80,10 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _SampleThreshold: 0.1
     - _SmoothnessTextureChannel: 0
-    - _SobelOffset: 1
-    - _SobelSensitivity: 0.1
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
-    - _VoxelSensitivity: 0.5
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

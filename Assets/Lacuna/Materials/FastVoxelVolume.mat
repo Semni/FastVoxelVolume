@@ -52,7 +52,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 8600000, guid: 721d71722f96acb4ebefa77c984092aa, type: 2}
+        m_Texture: {fileID: 8600000, guid: 55547c867ccb2b7448c1cbf9fd48a1b6, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -71,8 +71,12 @@ Material:
         m_Texture: {fileID: 2800000, guid: 1683cf2bf9faecc418a494725885eb9c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Udon_Lacuna_Color:
+        m_Texture: {fileID: 8600000, guid: ff9ab1ca113051746aadf8533513f9f2, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints:
-    - _RenderMode: 6
+    - _RenderMode: 0
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
@@ -88,6 +92,7 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _Sweep: 4
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
