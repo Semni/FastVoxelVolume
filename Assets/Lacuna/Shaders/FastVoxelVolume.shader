@@ -6,8 +6,6 @@ Shader "Lacuna/FastVoxelVolume"
         [NoScaleOffset] _Udon_3DJ_Color ("3DJ Colour", 2D) = "white" {}
         [NoScaleOffset] _Udon_Lacuna_Color ("Lacuna Colour", 2D) = "white" {}
         [Enum(3DJ Colour Mix, 0, Normal, 1, UV, 2, Mip Level, 3, Checkerboard, 4, Position, 5, 3DJ Preferred Direction, 6)] _RenderMode ("Render Mode", Integer) = 0
-        _Sweep ("Sweep", Range(-16, 16)) = 0
-
     }
     SubShader
     {
@@ -62,7 +60,9 @@ Shader "Lacuna/FastVoxelVolume"
             float4 _Udon_Lacuna_Color_TexelSize;
 
             uint _RenderMode;
-            int _Sweep;
+
+            float _VRChatMirrorMode;
+            float3 _VRChatMirrorCameraPos;
 
 
             v2f vert (appdata v)
@@ -75,7 +75,8 @@ Shader "Lacuna/FastVoxelVolume"
                 //o.surface_position = mul(unity_ObjectToWorld, v.vertex);
 
                 // For raymarching in object space.
-                o.camera_position = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1));
+                o.camera_position = _VRChatMirrorMode == 0 ? mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1)) :
+                                                             mul(unity_WorldToObject, float4(_VRChatMirrorCameraPos, 1));
                 o.surface_position = v.vertex;
 
                 return o;
@@ -260,99 +261,28 @@ Shader "Lacuna/FastVoxelVolume"
                 // Calculate normals and uv position for use later...
                 float3 normal = -(int3)mask * sign(ray_direction);
                 float2 uv = mask.x == 1 ? hit_position.yz : mask.y == 1 ? hit_position.xz : hit_position.xy;
-
-                uint2 bitmask = asuint(_MainTex.Load(uint4(hit_coord >> 2, 0)).zw);
-                int n = encode((hit_coord & 3) >> 1) * 8;
                 
 
                 switch (_RenderMode)
                 {
                     case 0: // Colour
+                        // Best results yet, there's a weird bug I am compensating for here. I still have to work that out...
+                        float4 leftColour = _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.z, hit_coord.y) + uint2(256, 256) + uint2(0, 2), 0, 0));
+                        float4 rightColour = _Udon_Lacuna_Color.Load(uint4(hit_coord.zy + uint2(256, 0) + uint2(0, 2), 0, 0));
+                        float4 bottomColour = _Udon_Lacuna_Color.Load(uint4(uint2(hit_coord.x, 256 - hit_coord.z) + uint2(2, 0), 0, 0));
+                        float4 topColour = _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, 256 - hit_coord.z) + uint2(512, 256) + uint2(-2, 0), 0, 0));
+                        float4 frontColour = _Udon_Lacuna_Color.Load(uint4(hit_coord.xy + uint2(0, 256) + uint2(2, 2), 0, 0));
+                        float4 backColour = _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, hit_coord.y) + uint2(512, 0) + uint2(-2, 2), 0, 0));
 
-                        float4 leftColour = _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.z, hit_coord.y) + uint2(256, 256), 0, 0));
-                        float4 rightColour = _Udon_Lacuna_Color.Load(uint4(hit_coord.zy + uint2(256, 0), 0, 0));
-                        float4 bottomColour = _Udon_Lacuna_Color.Load(uint4(uint2(hit_coord.x, 256 - hit_coord.z), 0, 0));
-                        float4 topColour = _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, 256 - hit_coord.z) + float2(512, 256), 0, 0));
-                        float4 frontColour = _Udon_Lacuna_Color.Load(uint4(hit_coord.xy + float2(0, 256), 0, 0));
-                        float4 backColour = _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, hit_coord.y) + float2(512, 0), 0, 0));
-
-                        float3 colour = floor(leftColour.a * 256 + _Sweep) == (256 - hit_coord.x) ? leftColour.rgb :
-                                        //floor(rightColour.a * 256) == hit_coord.x ? rightColour.rgb :
-                                        //floor(bottomColour.a * 256) == 256 - hit_coord.y ? bottomColour.rgb :
-                                        //floor(topColour.a * 256) == hit_coord.y ? topColour.rgb :
-                                        //floor(frontColour.a * 256) == 256 - hit_coord.z ? frontColour.rgb :
-                                        //floor(backColour.a * 256) == hit_coord.z ? backColour.rgb :
-                                        float3(0, 1, 0);
+                        float3 colour = floor(leftColour.a * 256) + 2 == 256 - hit_coord.x? leftColour.rgb :
+                                        floor(rightColour.a * 256) - 2 == hit_coord.x ? rightColour.rgb :
+                                        floor(bottomColour.a * 256) + 2 == 256 - hit_coord.y ? bottomColour.rgb :
+                                        floor(topColour.a * 256) - 2 == hit_coord.y ? topColour.rgb :
+                                        floor(frontColour.a * 256) == 256 - hit_coord.z ? frontColour.rgb :
+                                        floor(backColour.a * 256) == hit_coord.z ? backColour.rgb :
+                                        float3(1, 0, 1);
 
                         return float4(colour, 1);
-
-                        uint dirbitmask = (n < 32) ? ((bitmask.x >> n) & 0xff) : ((bitmask.y >> (n - 32) & 0xff));
-                        switch ((n < 32) ? ((bitmask.x >> n) & 0xff) : ((bitmask.y >> (n - 32) & 0xff)))
-                        {
-                            case 1: // Left only
-                                return _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.z, hit_coord.y) + uint2(256, 256), 0, 0));
-                            break;
-                            case 2: // Right only
-                                return _Udon_Lacuna_Color.Load(uint4(hit_coord.zy + uint2(256, 0), 0, 0));
-                            break;
-                            case 4: // Bottom only
-                                return _Udon_Lacuna_Color.Load(uint4(uint2(hit_coord.x, 256 - hit_coord.z), 0, 0));
-                            break;
-                            case 8: // Top only
-                                return _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, 256 - hit_coord.z) + float2(512, 256), 0, 0));
-                            break;
-                            case 16: // Front only
-                                return _Udon_Lacuna_Color.Load(uint4(hit_coord.xy + float2(0, 256), 0, 0));
-                            break;
-                            case 32: // Back only
-                                return _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, hit_coord.y) + float2(512, 0), 0, 0));
-                            break;
-                            case 9: // Left and Top
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.z, hit_coord.y) + uint2(256, 256), 0, 0)), _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, 256 - hit_coord.z) + float2(512, 256), 0, 0)), 0.5);
-                            break;
-                            case 10: // Right and Top
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(hit_coord.zy + uint2(256, 0), 0, 0)), _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, 256 - hit_coord.z) + float2(512, 256), 0, 0)), 0.5);
-                            break;
-                            case 24: // Front and Top
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(hit_coord.xy + float2(0, 256), 0, 0)), _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, 256 - hit_coord.z) + float2(512, 256), 0, 0)), 0.5);
-                            break;
-                            case 40: // Back and Top
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, hit_coord.y) + float2(512, 0), 0, 0)), _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, 256 - hit_coord.z) + float2(512, 256), 0, 0)), 0.5);
-                            break;
-                            case 5: // Left and Bottom
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.z, hit_coord.y) + uint2(256, 256), 0, 0)), _Udon_Lacuna_Color.Load(uint4(uint2(hit_coord.x, 256 - hit_coord.z), 0, 0)), 0.5);
-                            break;
-                            case 6: // Right and Bottom
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(hit_coord.zy + uint2(256, 0), 0, 0)), _Udon_Lacuna_Color.Load(uint4(uint2(hit_coord.x, 256 - hit_coord.z), 0, 0)), 0.5);
-                            break;
-                            case 20: // Front and Bottom
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(hit_coord.xy + float2(0, 256), 0, 0)), _Udon_Lacuna_Color.Load(uint4(uint2(hit_coord.x, 256 - hit_coord.z), 0, 0)), 0.5);
-                            break;
-                            case 36: // Back and Bottom
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, hit_coord.y) + float2(512, 0), 0, 0)), _Udon_Lacuna_Color.Load(uint4(uint2(hit_coord.x, 256 - hit_coord.z), 0, 0)), 0.5);
-                            break;
-                            case 17: // Left and Front
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.z, hit_coord.y) + uint2(256, 256), 0, 0)), _Udon_Lacuna_Color.Load(uint4(hit_coord.xy + float2(0, 256), 0, 0)), 0.5);
-                            break;
-                            case 33: // Left and Back
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.z, hit_coord.y) + uint2(256, 256), 0, 0)), _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, hit_coord.y) + float2(512, 0), 0, 0)), 0.5);
-                            break;
-                            case 18: // Right and Front
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(hit_coord.zy + uint2(256, 0), 0, 0)), _Udon_Lacuna_Color.Load(uint4(hit_coord.xy + float2(0, 256), 0, 0)), 0.5);
-                            break;
-                            case 34: // Right and Back
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(hit_coord.zy + uint2(256, 0), 0, 0)), _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, hit_coord.y) + float2(512, 0), 0, 0)), 0.5);
-                            break;
-                            case 3: // Left and Right
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.z, hit_coord.y) + uint2(256, 256), 0, 0)), _Udon_Lacuna_Color.Load(uint4(hit_coord.zy + uint2(256, 0), 0, 0)), 0.5);
-                            break;
-                            case 48: // Front and Back
-                                return lerp(_Udon_Lacuna_Color.Load(uint4(hit_coord.xy + float2(0, 256), 0, 0)), _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, hit_coord.y) + float2(512, 0), 0, 0)), 0.5);
-                            break;
-                            default:
-                            break;
-                        }
-                        //return _ColourTex.Load(uint4(hit_coord, 1));
                     break;
                     case 1: //Normal
                         //return dot(normal, -ray_direction);
@@ -372,12 +302,9 @@ Shader "Lacuna/FastVoxelVolume"
                         return float4(hit_position, 1);
                     break;
                     case 6: // 3DJ
-                        //uint2 bitmask = asuint(_MainTex.Load(uint4(hit_coord >> 2, 0)).zw);
-                        //int n = encode((hit_coord & 3) >> 1) * 8;
+                        uint2 bitmask = asuint(_MainTex.Load(uint4(hit_coord >> 2, 0)).zw);
+                        int n = encode((hit_coord & 3) >> 1) * 8;
 
-                        //hit_position += float3(0.5 * 0.25, 0.5 * 0.25, 0.5 * 0.25) * _MainTex_TexelSize.x;
-
-                        //(hit_coord * _MainTex_TexelSize.z)
                         hit_position = hit_coord * _MainTex_TexelSize.x * 0.25;
 
                         switch (int(normal.x + normal.y * 2 + normal.z * 3))

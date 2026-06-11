@@ -110,12 +110,12 @@ Shader "Lacuna/Flyover_Lacuna_Bitmask"
                         {
                             uint3 loadTexcoord = uint3(x, y, z) + IN.localTexcoord.xyz * 256;
 
-                            uint2 leftLoadTexcoord = uint2(256 - loadTexcoord.z, loadTexcoord.y) + float2(256, 256);
-                            uint2 rightLoadTexcoord = loadTexcoord.zy + float2(256, 0);
+                            uint2 leftLoadTexcoord = uint2(256 - loadTexcoord.z, loadTexcoord.y) + uint2(256, 256);
+                            uint2 rightLoadTexcoord = loadTexcoord.zy + uint2(256, 0);
                             uint2 bottomLoadTexcoord = uint2(loadTexcoord.x, 256 - loadTexcoord.z);
-                            uint2 topLoadTexcoord = uint2(256 - loadTexcoord.x, 256 - loadTexcoord.z) + float2(512, 256);
-                            uint2 frontLoadTexcoord = loadTexcoord.xy + float2(0, 256);
-                            uint2 backLoadTexcoord = uint2(256 - loadTexcoord.x, loadTexcoord.y) + float2(512, 0);
+                            uint2 topLoadTexcoord = uint2(256 - loadTexcoord.x, 256 - loadTexcoord.z) + uint2(512, 256);
+                            uint2 frontLoadTexcoord = loadTexcoord.xy + uint2(0, 256);
+                            uint2 backLoadTexcoord = uint2(256 - loadTexcoord.x, loadTexcoord.y) + uint2(512, 0);
 
                             uint left_depth_texel = _Udon_Lacuna_Depth.Load(uint4(leftLoadTexcoord, 0, 0)).a * 256; // -X Left
                             uint right_depth_texel = _Udon_Lacuna_Depth.Load(uint4(rightLoadTexcoord, 0, 0)).a * 256; // +X Right
