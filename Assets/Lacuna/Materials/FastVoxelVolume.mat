@@ -68,7 +68,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Udon_3DJ_Color:
-        m_Texture: {fileID: 2800000, guid: 1683cf2bf9faecc418a494725885eb9c, type: 3}
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Udon_3DJ_Data:
+        m_Texture: {fileID: 8600000, guid: f436f7ed8dfa45a439924ca470e4eb53, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Udon_Lacuna_Color:
@@ -90,10 +94,11 @@ Material:
     - _OcclusionStrength: 1
     - _Offset: 2
     - _Parallax: 0.02
+    - _Rotate: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _Sweep: 0
+    - _Sweep: 1.91
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:

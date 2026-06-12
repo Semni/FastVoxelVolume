@@ -2,7 +2,7 @@ Shader "Lacuna/Flyover_Bitmask"
 {
     Properties
     {
-        [NoScaleOffset] _Udon_3DJ_Depth ("3DJ Depth", 2D) = "white" {}
+        //[NoScaleOffset] _Udon_3DJ_Depth ("3DJ Depth", 2D) = "white" {}
         _SobelOffset("Sobel Filter Width", Range(0.5, 2.0)) = 1.0
         _SobelSensitivity("Sobel Filter Sensitivity", Range(0.01, 0.2)) = 0.1
         _VoxelSensitivity ("Voxel Sensitivity", Range(0.25, 4)) = 1.0
@@ -20,6 +20,8 @@ Shader "Lacuna/Flyover_Bitmask"
             #pragma vertex CustomRenderTextureVertexShader
             #pragma fragment frag
 
+            #include "LacunaCG.cginc"
+
             Texture2D _Udon_3DJ_Depth;
             SamplerState sampler_Udon_3DJ_Depth;
             SamplerState _linear_clamp_sampler;
@@ -31,7 +33,7 @@ Shader "Lacuna/Flyover_Bitmask"
             float _SampleThreshold;
             
 
-            uint encode (uint x, uint y, uint z)
+            /*uint encode (uint x, uint y, uint z)
             {
                 x = (x | (x << 16u)) & 0x030000FF;
                 x = (x | (x << 8u)) & 0x0300F00F;
@@ -55,14 +57,6 @@ Shader "Lacuna/Flyover_Bitmask"
             {
                 low |= n < 32 ? 1u << n : 0u;
                 high |= n >= 32 && n < 64 ? 1u << (n - 32) : 0u;
-                /*if(n < 32)
-                {
-                    low = low | 1u << n;
-                }
-                else if(n < 64)
-                {
-                    high = high | 1u << (n - 32);
-                }*/
             }
 
             float SobelDepth(float ldc, float ldl, float ldr, float ldu, float ldd)
@@ -82,7 +76,7 @@ Shader "Lacuna/Flyover_Bitmask"
                 float pixelDown = t.Sample(s, uv - offset.zy).r;
 
                 return SobelDepth(pixelCenter, pixelLeft, pixelRight, pixelUp, pixelDown);
-            }
+            }*/
 
             uint4 frag (v2f_customrendertexture IN) : SV_Target
             {

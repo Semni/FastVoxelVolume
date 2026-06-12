@@ -2,8 +2,8 @@ Shader "Lacuna/3DJ_To_Lacuna"
 {
     Properties
     {
-        [NoScaleOffset] _Udon_3DJ_Color ("3DJ Colour", 2D) = "white" {}
-        [NoScaleOffset] _Udon_3DJ_Depth ("3DJ Depth", 2D) = "white" {}
+        //[NoScaleOffset] _Udon_3DJ_Color ("3DJ Colour", 2D) = "white" {}
+        //[NoScaleOffset] _Udon_3DJ_Depth ("3DJ Depth", 2D) = "white" {}
     }
     SubShader
     {
