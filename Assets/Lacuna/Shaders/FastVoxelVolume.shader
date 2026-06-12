@@ -4,7 +4,7 @@ Shader "Lacuna/FastVoxelVolume"
     {
         [NoScaleOffset] _MainTex ("Voxel Bitmask", 3D) = "white" {}
         //[NoScaleOffset] _Udon_3DJ_Color ("3DJ Colour", 2D) = "white" {}
-        [NoScaleOffset] _Udon_3DJ_Data ("3DJ Data", 2D) = "white" {}
+        //[NoScaleOffset] _Udon_3DJ_Data ("3DJ Data", 2D) = "white" {}
         [NoScaleOffset] _Udon_Lacuna_Color ("Lacuna Colour", 2D) = "white" {}
         [Enum(3DJ, 0, Normal, 1, UV, 2, Mip Level, 3, Checkerboard, 4, Position, 5)] _RenderMode ("Render Mode", Integer) = 0  
     }
@@ -41,8 +41,6 @@ Shader "Lacuna/FastVoxelVolume"
                 float4 vertex : SV_POSITION;
                 float3 camera_position : TEXCOORD0;
                 float3 surface_position : TEXCOORD1;
-                float rotation : TEXCOORD2;
-                float scale : TEXCOORD3;
             };
 
             // The dimensions of the 3D texture must be a power of 2.
@@ -71,13 +69,6 @@ Shader "Lacuna/FastVoxelVolume"
 
             float _VRChatMirrorMode;
             float3 _VRChatMirrorCameraPos;
-
-            float2 Rotate2D(float2 value, float angle)
-            {
-                float s = sin(angle);
-                float c = cos(angle);
-                return float2(value.x * c - value.y * s, value.x * s + value.y * c);
-            }
 
             float4x4 SRTMatrix (float3 scale, float3 rotation, float3 translation)
             {
@@ -109,29 +100,35 @@ Shader "Lacuna/FastVoxelVolume"
             {
                 v2f o;
 
+                /*float3 _translation = 0;
+                float _rotation = 0;
+                float _scale = 1;
+                float _invScale = 1;
+
                 if(_RenderMode == 0)
                 {
                     int rotation = 0;
                     int scale = 0;
+                    int3 translation = 0;
                     [unroll]
                     for(int i = 0; i < 20; i++)
                     {
-                        float2 data = _Udon_3DJ_Data.Load(uint4(uint2(48 + 96 * i, 5), 0, 0)).xy;
-                        rotation |= data.x > 0.5 ? 1 << i : 0;
-                        scale |= data.y > 0.5 ? 1 << i : 0; 
+                        float2 rotscale = _Udon_3DJ_Data.Load(uint4(uint2(48 + 96 * i, 5), 0, 0)).xy;
+                        float3 translationload = _Udon_3DJ_Data.Load(uint4(uint2(48 + 96 * i, 15), 0, 0)).xyz;
+                        rotation |= rotscale.x > 0.5 ? 1 << i : 0;
+                        scale |= rotscale.y > 0.5 ? 1 << i : 0; 
+                        translation.x |= translationload.x > 0.5 ? 1 << i : 0;
+                        translation.y |= translationload.y > 0.5 ? 1 << i : 0;
+                        translation.z |= translationload.z > 0.5 ? 1 << i : 0;
                     }
 
-                    o.rotation = radians(float(rotation / 100.0));
-                    o.scale = 1.0 / float(scale / 100.0);
+                    _rotation = radians(float(rotation / 100.0));
+                    _scale = float(scale / 100.0);
+                    _invScale = 1. / _scale;
+                    _translation = translation / 100.0 - 524288;
+                }
 
-                    v.vertex.xz = Rotate2D(v.vertex.xz, -o.rotation);
-                    v.vertex /= o.scale;
-                }
-                else
-                {
-                    o.rotation = 0;
-                    o.scale = 1;
-                }
+                v.vertex = mul(SRTMatrix(_scale, float3(0, _rotation, 0), _translation), v.vertex);*/
 
                 o.vertex = UnityObjectToClipPos(v.vertex);
 
@@ -143,6 +140,10 @@ Shader "Lacuna/FastVoxelVolume"
                 o.camera_position = _VRChatMirrorMode == 0 ? mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1)) :
                                                              mul(unity_WorldToObject, float4(_VRChatMirrorCameraPos, 1));
                 o.surface_position = v.vertex;
+
+                /*float4x4 lacuna_ObjectTo3DJ = transpose(SRTMatrix(_invScale, float3(0, _rotation, 0), _translation));
+                o.camera_position = mul(o.camera_position, lacuna_ObjectTo3DJ);
+                o.surface_position = mul(o.surface_position, lacuna_ObjectTo3DJ);*/
 
                 return o;
             }
@@ -173,7 +174,7 @@ Shader "Lacuna/FastVoxelVolume"
             }*/
 
             // Our main traversal algorithm.
-            bool traversal (float3 ray_position, float3 direction, out float3 hit_position, out uint3 hit_coord, out uint3 mask)
+            /*bool traversal (float3 ray_position, float3 direction, out float3 hit_position, out uint3 hit_coord, out uint3 mask)
             {
                 hit_position = ray_position;
                 hit_coord = uint3(0, 0, 0);
@@ -288,7 +289,7 @@ Shader "Lacuna/FastVoxelVolume"
                 }
                 // If we get to here something has gone wrong and we should discard this ray. Or not...
                 return false;
-            }
+            }*/
 
             float mip_map_level (in float2 texture_coordinate) // texture_coordinate = uv_MainTex * _MainTex_TexelSize.zw
             {
@@ -309,15 +310,10 @@ Shader "Lacuna/FastVoxelVolume"
                 // This seems backwards but we need our direction first.
                 float3 ray_direction = normalize(i.surface_position - i.camera_position);
                 // The ray should start from the clipping plane, and bring the ray position into 0.0 to 1.0 space from -0.5 to 0.5 space.
-                float3 ray_position = i.camera_position * i.scale + ray_direction * _ProjectionParams.y;
-
-                ray_direction.xz = Rotate2D(ray_direction.xz, i.rotation);
-                ray_position.xz = Rotate2D(ray_position.xz, i.rotation);
-
-                ray_position += 0.5;
+                float3 ray_position = i.camera_position + ray_direction * _ProjectionParams.y + 0.5;
 
                 // Do the raymarching, if we don't hit anything we can discard the pixel.
-                if (!traversal(ray_position, ray_direction, hit_position, hit_coord, mask)) discard;
+                if (!traversal(_MainTex, _MainTex_TexelSize, ray_position, ray_direction, hit_position, hit_coord, mask)) discard;
 
                 // Write to the depth buffer. Remember to bring it back into -0.5 to 0.5 space for this.
                 // For raymarching in world space.

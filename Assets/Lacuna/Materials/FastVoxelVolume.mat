@@ -52,7 +52,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 8600000, guid: 55547c867ccb2b7448c1cbf9fd48a1b6, type: 2}
+        m_Texture: {fileID: 8600000, guid: 4718a00f2f78fd348bfa08f5251e3517, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -72,7 +72,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Udon_3DJ_Data:
-        m_Texture: {fileID: 8600000, guid: f436f7ed8dfa45a439924ca470e4eb53, type: 2}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Udon_Lacuna_Color:
@@ -80,7 +80,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints:
-    - _RenderMode: 0
+    - _RenderMode: 1
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5

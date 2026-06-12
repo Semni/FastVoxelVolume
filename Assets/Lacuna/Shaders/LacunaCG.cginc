@@ -57,7 +57,7 @@ float SobelSampleDepth(Texture2D t, SamplerState s, float2 uv, float3 offset)
 }
 
 // Our main traversal algorithm.
-bool traversal (Texture2D _MainTex, float4 _MainTex_TexelSize, float3 ray_position, float3 direction, out float3 hit_position, out uint3 hit_coord, out uint3 mask)
+bool traversal (Texture3D _MainTex, float4 _MainTex_TexelSize, float3 ray_position, float3 direction, out float3 hit_position, out uint3 hit_coord, out uint3 mask)
 {
     hit_position = ray_position;
     hit_coord = uint3(0, 0, 0);
