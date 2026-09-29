@@ -3,6 +3,8 @@ Shader "Lacuna/Flyover"
     Properties
     {
         [NoScaleOffset] _MainTex ("Voxel Bitmask", 3D) = "white" {}
+        [NoScaleOffset] _OctaveTex_1 ("Octave 1", 3D) = "white" {}
+        [NoScaleOffset] _OctaveTex_2 ("Octave 2", 3D) = "white" {}
         [NoScaleOffset] _Udon_Lacuna_Color ("Lacuna Colour", 2D) = "white" {}
     }
     SubShader
@@ -44,6 +46,12 @@ Shader "Lacuna/Flyover"
             // The Color Format must be R32G32_UINT.
             UNITY_DECLARE_TEX3D(_MainTex);
             float4 _MainTex_TexelSize;
+
+            UNITY_DECLARE_TEX3D(_OctaveTex_1);
+            float4 _OctaveTex_1_TexelSize;
+
+            UNITY_DECLARE_TEX3D(_OctaveTex_2);
+            float4 _OctaveTex_2_TexelSize;
 
             Texture2D _Udon_Lacuna_Color;
 
@@ -89,7 +97,9 @@ Shader "Lacuna/Flyover"
                 float3 ray_position = i.camera_position + ray_direction * _ProjectionParams.y + 0.5;
 
                 // Do the raymarching, if we don't hit anything we can discard the pixel.
-                if (!traversal(_MainTex, _MainTex_TexelSize, ray_position, ray_direction, hit_position, hit_coord, mask)) discard;
+                if (!traversal(_OctaveTex_2, _OctaveTex_2_TexelSize, ray_position, ray_direction, hit_position, hit_coord, mask)) discard;
+                if (!traversal(_OctaveTex_1, _OctaveTex_1_TexelSize, hit_position, ray_direction, hit_position, hit_coord, mask)) discard;
+                if (!traversal(_MainTex, _MainTex_TexelSize, hit_position, ray_direction, hit_position, hit_coord, mask)) discard;
 
                 // Write to the depth buffer. Remember to bring it back into -0.5 to 0.5 space for this.
                 // For raymarching in world space.

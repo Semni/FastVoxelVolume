@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Flyover
-  m_Shader: {fileID: 4800000, guid: 4f2752a71d8adb4418ba1633734251bf, type: 3}
+  m_Name: Flyover_Octave_1
+  m_Shader: {fileID: 4800000, guid: 700ee4880c23b824c90c94fb9dad867b, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -23,15 +23,15 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _BackTex:
+        m_Texture: {fileID: 8600000, guid: b0379bdb8d20cff4189fa357755b3af5, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BottomTex:
+        m_Texture: {fileID: 8600000, guid: 863e6d05116c68e40acc66515eee3c30, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ColTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ColourTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -51,6 +51,14 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _FrontTex:
+        m_Texture: {fileID: 8600000, guid: f364e9eab21a31746b27f89081751c38, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _LeftTex:
+        m_Texture: {fileID: 8600000, guid: a53aff4d7913577498f120d0aae91760, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 8600000, guid: 55547c867ccb2b7448c1cbf9fd48a1b6, type: 2}
         m_Scale: {x: 1, y: 1}
@@ -63,36 +71,19 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _OctaveTex_0:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OctaveTex_1:
-        m_Texture: {fileID: 8600000, guid: ca079552a7db33248b933e0714e06b4d, type: 2}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OctaveTex_2:
-        m_Texture: {fileID: 8600000, guid: 5fda5a81cfc4531438326fdde671c1e4, type: 2}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _Udon_3DJ_Color:
-        m_Texture: {fileID: 0}
+    - _RightTex:
+        m_Texture: {fileID: 8600000, guid: 81c396aa110387e4db8a3de9f7a0c44a, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _Udon_3DJ_Data:
-        m_Texture: {fileID: 0}
+    - _TopTex:
+        m_Texture: {fileID: 8600000, guid: cf94fcddc43be0f4d9acdf2784d4fff6, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _Udon_Lacuna_Color:
-        m_Texture: {fileID: 8600000, guid: ff9ab1ca113051746aadf8533513f9f2, type: 2}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints:
-    - _RenderMode: 0
+    m_Ints: []
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
@@ -104,13 +95,10 @@ Material:
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
-    - _Offset: 2
     - _Parallax: 0.02
-    - _Rotate: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _Sweep: 1.91
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
