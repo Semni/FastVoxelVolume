@@ -56,15 +56,20 @@ float SobelSampleDepth(Texture2D t, SamplerState s, float2 uv, float3 offset)
     return SobelDepth(pixelCenter, pixelLeft, pixelRight, pixelUp, pixelDown);
 }
 
-float SobelLoadDepth(Texture2D t, uint2 uv, uint3 offset)
+float SobelLoadDepth(Texture2D t, uint2 uv, uint offset)
 {
     float pixelCenter = t.Load(uint4(uv, 0, 0)).a;
-    float pixelLeft = t.Load(uint4(uv - offset.xz, 0, 0)).a;
-    float pixelRight = t.Load(uint4(uv + offset.xz, 0, 0)).a;
-    float pixelUp = t.Load(uint4(uv + offset.zy, 0, 0)).a;
-    float pixelDown = t.Load(uint4(uv - offset.zy, 0, 0)).a;
+    float pixelLeft = t.Load(uint4(uv - uint2(offset, 0), 0, 0)).a;
+    float pixelRight = t.Load(uint4(uv + uint2(offset, 0), 0, 0)).a;
+    float pixelUp = t.Load(uint4(uv + uint2(0, offset), 0, 0)).a;
+    float pixelDown = t.Load(uint4(uv - uint2(0, offset), 0, 0)).a;
     
     return SobelDepth(pixelCenter, pixelLeft, pixelRight, pixelUp, pixelDown);
+}
+
+float planeIntersect( in float3 ro, in float3 rd, in float4 p)
+{
+    return -(dot(ro, p.xyz) + p.w) / dot(rd, p.xyz);
 }
 
 // The AABB Intersection algorithm.

@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Flyover_Bitmask
-  m_Shader: {fileID: 4800000, guid: fa03d8104d9b28e418b22fb8ab58c5c2, type: 3}
+  m_Shader: {fileID: 4800000, guid: ab021e11d70dd534e9ac4a7a535baaf7, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -63,6 +63,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Udon_Lacuna_Depth:
+        m_Texture: {fileID: 8600000, guid: ff9ab1ca113051746aadf8533513f9f2, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints:
     - _RenderMode: 0
     m_Floats:
@@ -77,14 +81,14 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _SampleThreshold: 0.1
+    - _SampleThreshold: 0.02
     - _SmoothnessTextureChannel: 0
     - _SobelOffset: 1
     - _SobelSensitivity: 0.1
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
-    - _VoxelSensitivity: 0.5
+    - _VoxelSensitivity: 1
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

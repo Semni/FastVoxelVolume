@@ -3,8 +3,8 @@ Shader "Lacuna/Flyover"
     Properties
     {
         [NoScaleOffset] _MainTex ("Voxel Bitmask", 3D) = "white" {}
-        [NoScaleOffset] _OctaveTex_1 ("Octave 1", 3D) = "white" {}
-        [NoScaleOffset] _OctaveTex_2 ("Octave 2", 3D) = "white" {}
+        //[NoScaleOffset] _OctaveTex_1 ("Octave 1", 3D) = "white" {}
+        //[NoScaleOffset] _OctaveTex_2 ("Octave 2", 3D) = "white" {}
         [NoScaleOffset] _Udon_Lacuna_Color ("Lacuna Colour", 2D) = "white" {}
     }
     SubShader
@@ -47,11 +47,11 @@ Shader "Lacuna/Flyover"
             UNITY_DECLARE_TEX3D(_MainTex);
             float4 _MainTex_TexelSize;
 
-            UNITY_DECLARE_TEX3D(_OctaveTex_1);
-            float4 _OctaveTex_1_TexelSize;
+            //UNITY_DECLARE_TEX3D(_OctaveTex_1);
+            //float4 _OctaveTex_1_TexelSize;
 
-            UNITY_DECLARE_TEX3D(_OctaveTex_2);
-            float4 _OctaveTex_2_TexelSize;
+            //UNITY_DECLARE_TEX3D(_OctaveTex_2);
+            //float4 _OctaveTex_2_TexelSize;
 
             Texture2D _Udon_Lacuna_Color;
 
@@ -89,17 +89,20 @@ Shader "Lacuna/Flyover"
                 float3 hit_position;
                 uint3 hit_coord;
                 uint3 mask;
+                //float4 nearPlane = mul(float4(0, 0, -1, 1), UNITY_MATRIX_VP);
+                //nearPlane = nearPlane / length(nearPlane.xyz);
 
                 // Calculate our ray
                 // This seems backwards but we need our direction first.
                 float3 ray_direction = normalize(i.surface_position - i.camera_position);
                 // The ray should start from the clipping plane, and bring the ray position into 0.0 to 1.0 space from -0.5 to 0.5 space.
                 float3 ray_position = i.camera_position + ray_direction * _ProjectionParams.y + 0.5;
+                //float3 ray_position = i.camera_position + ray_direction * planeIntersect(i.camera_position, ray_direction, nearPlane) + 0.5;
 
                 // Do the raymarching, if we don't hit anything we can discard the pixel.
-                if (!traversal(_OctaveTex_2, _OctaveTex_2_TexelSize, ray_position, ray_direction, hit_position, hit_coord, mask)) discard;
-                if (!traversal(_OctaveTex_1, _OctaveTex_1_TexelSize, hit_position, ray_direction, hit_position, hit_coord, mask)) discard;
-                if (!traversal(_MainTex, _MainTex_TexelSize, hit_position, ray_direction, hit_position, hit_coord, mask)) discard;
+                //if (!traversal(_OctaveTex_2, _OctaveTex_2_TexelSize, ray_position, ray_direction, hit_position, hit_coord, mask)) discard;
+                //if (!traversal(_OctaveTex_1, _OctaveTex_1_TexelSize, hit_position, ray_direction, hit_position, hit_coord, mask)) discard;
+                if (!traversal(_MainTex, _MainTex_TexelSize, ray_position, ray_direction, hit_position, hit_coord, mask)) discard;
 
                 // Write to the depth buffer. Remember to bring it back into -0.5 to 0.5 space for this.
                 // For raymarching in world space.

@@ -5,7 +5,6 @@ Shader "Lacuna/Flyover_Bitmask"
         [NoScaleOffset] _Udon_Lacuna_Depth ("Lacuna Depth", 2D) = "white" {}
         _SobelOffset ("Sobel Filter Width", Range(0.5, 2.0)) = 1.0
         _SobelSensitivity ("Sobel Filter Sensitivity", Range(0.01, 0.2)) = 0.1
-        _VoxelSensitivity ("Voxel Sensitivity", Range(0.25, 4)) = 0.5
         _SampleThreshold ("Sampling Threshold", Range(0, 1)) = 0.02
     }
     SubShader
@@ -44,43 +43,53 @@ Shader "Lacuna/Flyover_Bitmask"
                 // It also must be a cube
                 // Getting this wrong would be Very Bad™
 
-                uint3 sOffset = uint3(_SobelOffset, _SobelOffset, 0);
-
                 // Now we step through our voxels
                 [unroll]
                 for (uint x = 0; x < 4; x++)
                     for (uint y = 0; y < 4; y++)
                         for (uint z = 0; z < 4; z++)
                         {
-                            uint3 loadTexcoord = uint3(x, y, z) + IN.localTexcoord.xyz * 256;
+                            uint3 loadTexcoord = uint3(x, y, z) + IN.localTexcoord.xyz * _CustomRenderTextureInfo.xyz * 4;
 
-                            uint2 leftLoadTexcoord = uint2(256 - loadTexcoord.z, loadTexcoord.y) + uint2(256, 256);
-                            uint2 rightLoadTexcoord = loadTexcoord.zy + uint2(256, 0);
-                            uint2 bottomLoadTexcoord = uint2(loadTexcoord.x, 256 - loadTexcoord.z);
-                            uint2 topLoadTexcoord = uint2(256 - loadTexcoord.x, 256 - loadTexcoord.z) + uint2(512, 256);
-                            uint2 frontLoadTexcoord = loadTexcoord.xy + uint2(0, 256);
-                            uint2 backLoadTexcoord = uint2(256 - loadTexcoord.x, loadTexcoord.y) + uint2(512, 0);
+                            uint2 leftLoadTexcoord = uint2(_CustomRenderTextureInfo.z * 4 - loadTexcoord.z, loadTexcoord.y) + _CustomRenderTextureInfo.zy * 4;
+                            uint2 rightLoadTexcoord = loadTexcoord.zy + uint2(_CustomRenderTextureInfo.z * 4, 0);
+                            uint2 bottomLoadTexcoord = uint2(loadTexcoord.x, _CustomRenderTextureInfo.z * 4 - loadTexcoord.z);
+                            uint2 topLoadTexcoord = uint2(_CustomRenderTextureInfo.x * 4 - loadTexcoord.x, _CustomRenderTextureInfo.z * 4 - loadTexcoord.z) + _CustomRenderTextureInfo.xz * uint2(8, 4);
+                            uint2 frontLoadTexcoord = loadTexcoord.xy + uint2(0, _CustomRenderTextureInfo.y * 4);
+                            uint2 backLoadTexcoord = uint2(_CustomRenderTextureInfo.x * 4 - loadTexcoord.x, loadTexcoord.y) + uint2(_CustomRenderTextureInfo.y * 8, 0);
 
-                            uint left_depth_texel = _Udon_Lacuna_Depth.Load(uint4(leftLoadTexcoord, 0, 0)).a * 256; // -X Left
-                            uint right_depth_texel = _Udon_Lacuna_Depth.Load(uint4(rightLoadTexcoord, 0, 0)).a * 256; // +X Right
-                            uint bottom_depth_texel = _Udon_Lacuna_Depth.Load(uint4(bottomLoadTexcoord, 0, 0)).a * 256; // -Y Bottom
-                            uint top_depth_texel = _Udon_Lacuna_Depth.Load(uint4(topLoadTexcoord, 0, 0)).a * 256; // +Y Top
-                            uint front_depth_texel = _Udon_Lacuna_Depth.Load(uint4(frontLoadTexcoord, 0, 0)).a * 256; // -Z Front
-                            uint back_depth_texel = _Udon_Lacuna_Depth.Load(uint4(backLoadTexcoord, 0, 0)).a * 256; // +Z Back
+                            uint left_depth_texel = _Udon_Lacuna_Depth.Load(uint4(leftLoadTexcoord, 0, 0)).a * _CustomRenderTextureInfo.x * 4; // -X Left
+                            uint right_depth_texel = _Udon_Lacuna_Depth.Load(uint4(rightLoadTexcoord, 0, 0)).a * _CustomRenderTextureInfo.x * 4; // +X Right
+                            uint bottom_depth_texel = _Udon_Lacuna_Depth.Load(uint4(bottomLoadTexcoord, 0, 0)).a * _CustomRenderTextureInfo.y * 4; // -Y Bottom
+                            uint top_depth_texel = _Udon_Lacuna_Depth.Load(uint4(topLoadTexcoord, 0, 0)).a * _CustomRenderTextureInfo.y * 4; // +Y Top
+                            uint front_depth_texel = _Udon_Lacuna_Depth.Load(uint4(frontLoadTexcoord, 0, 0)).a * _CustomRenderTextureInfo.z * 4; // -Z Front
+                            uint back_depth_texel = _Udon_Lacuna_Depth.Load(uint4(backLoadTexcoord, 0, 0)).a * _CustomRenderTextureInfo.z * 4; // +Z Back
 
-                            float left_depth_texel_sobel = SobelLoadDepth(_Udon_Lacuna_Depth, leftLoadTexcoord, sOffset); // -X Left
-                            float right_depth_texel_sobel = SobelLoadDepth(_Udon_Lacuna_Depth, rightLoadTexcoord, sOffset); // +X Right
-                            float bottom_depth_texel_sobel = SobelLoadDepth(_Udon_Lacuna_Depth, bottomLoadTexcoord, sOffset); // -Y Bottom
-                            float top_depth_texel_sobel = SobelLoadDepth(_Udon_Lacuna_Depth, topLoadTexcoord, sOffset); // +Y Top
-                            float front_depth_texel_sobel = SobelLoadDepth(_Udon_Lacuna_Depth, frontLoadTexcoord, sOffset); // -Z Front
-                            float back_depth_texel_sobel = SobelLoadDepth(_Udon_Lacuna_Depth, backLoadTexcoord, sOffset); // +Z Back
+                            float left_depth_texel_sobel = SobelLoadDepth(_Udon_Lacuna_Depth, leftLoadTexcoord, _SobelOffset); // -X Left
+                            float right_depth_texel_sobel = SobelLoadDepth(_Udon_Lacuna_Depth, rightLoadTexcoord, _SobelOffset); // +X Right
+                            float bottom_depth_texel_sobel = SobelLoadDepth(_Udon_Lacuna_Depth, bottomLoadTexcoord, _SobelOffset); // -Y Bottom
+                            float top_depth_texel_sobel = SobelLoadDepth(_Udon_Lacuna_Depth, topLoadTexcoord, _SobelOffset); // +Y Top
+                            float front_depth_texel_sobel = SobelLoadDepth(_Udon_Lacuna_Depth, frontLoadTexcoord, _SobelOffset); // -Z Front
+                            float back_depth_texel_sobel = SobelLoadDepth(_Udon_Lacuna_Depth, backLoadTexcoord, _SobelOffset); // +Z Back
 
-                            bool left_depth_texel_flag = left_depth_texel_sobel < _SobelSensitivity && left_depth_texel > _SampleThreshold && (256 - loadTexcoord.x) == left_depth_texel;
-                            bool right_depth_texel_flag = right_depth_texel_sobel < _SobelSensitivity && right_depth_texel > _SampleThreshold && loadTexcoord.x == right_depth_texel;
-                            bool bottom_depth_texel_flag = bottom_depth_texel_sobel < _SobelSensitivity && bottom_depth_texel > _SampleThreshold && (256 - loadTexcoord.y) == bottom_depth_texel;
-                            bool top_depth_texel_flag = top_depth_texel_sobel < _SobelSensitivity && top_depth_texel > _SampleThreshold && loadTexcoord.y == top_depth_texel;
-                            bool front_depth_texel_flag = front_depth_texel_sobel < _SobelSensitivity && front_depth_texel > _SampleThreshold && (256 - loadTexcoord.z) == front_depth_texel;
-                            bool back_depth_texel_flag = back_depth_texel_sobel < _SobelSensitivity && back_depth_texel > _SampleThreshold && loadTexcoord.z == back_depth_texel;
+                            bool left_depth_texel_flag =    left_depth_texel_sobel < _SobelSensitivity && 
+                                                            left_depth_texel > (uint)(_SampleThreshold * _CustomRenderTextureInfo.x * 4) && 
+                                                            (uint)(_CustomRenderTextureInfo.x * 4 - loadTexcoord.x) == left_depth_texel;
+                            bool right_depth_texel_flag =   right_depth_texel_sobel < _SobelSensitivity && 
+                                                            right_depth_texel > (uint)(_SampleThreshold * _CustomRenderTextureInfo.x * 4) && 
+                                                            loadTexcoord.x == right_depth_texel;
+                            bool bottom_depth_texel_flag =  bottom_depth_texel_sobel < _SobelSensitivity && 
+                                                            bottom_depth_texel > (uint)(_SampleThreshold * _CustomRenderTextureInfo.y * 4) && 
+                                                            (uint)(_CustomRenderTextureInfo.y * 4 - loadTexcoord.y) == bottom_depth_texel;
+                            bool top_depth_texel_flag =     top_depth_texel_sobel < _SobelSensitivity && 
+                                                            top_depth_texel > (uint)(_SampleThreshold * _CustomRenderTextureInfo.y * 4) && 
+                                                            loadTexcoord.y == top_depth_texel;
+                            bool front_depth_texel_flag =   front_depth_texel_sobel < _SobelSensitivity && 
+                                                            front_depth_texel > (uint)(_SampleThreshold * _CustomRenderTextureInfo.z * 4) && 
+                                                            (uint)(_CustomRenderTextureInfo.z * 4 - loadTexcoord.z) == front_depth_texel;
+                            bool back_depth_texel_flag =    back_depth_texel_sobel < _SobelSensitivity && 
+                                                            back_depth_texel > (uint)(_SampleThreshold * _CustomRenderTextureInfo.z * 4) && 
+                                                            loadTexcoord.z == back_depth_texel;
 
                             if(left_depth_texel_flag || right_depth_texel_flag || bottom_depth_texel_flag || top_depth_texel_flag || front_depth_texel_flag || back_depth_texel_flag)
                                 insert(encode(x, y, z), bits_x, bits_y);
