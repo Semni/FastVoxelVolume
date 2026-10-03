@@ -6,6 +6,7 @@ Shader "Lacuna/Flyover"
         //[NoScaleOffset] _OctaveTex_1 ("Octave 1", 3D) = "white" {}
         //[NoScaleOffset] _OctaveTex_2 ("Octave 2", 3D) = "white" {}
         [NoScaleOffset] _Udon_Lacuna_Color ("Lacuna Colour", 2D) = "white" {}
+        [NoScaleOffset] _DepthTex ("Flyover Depthmap", 2D) = "white" {}
     }
     SubShader
     {
@@ -54,6 +55,14 @@ Shader "Lacuna/Flyover"
             //float4 _OctaveTex_2_TexelSize;
 
             Texture2D _Udon_Lacuna_Color;
+
+            Texture2D _DepthTex;
+
+            Texture2D _Udon_3DJ_Depth;
+            SamplerState sampler_Udon_3DJ_Depth;
+            float4 _Udon_3DJ_Depth_TexelSize;
+
+            SamplerState _linear_clamp_sampler;
 
             float _VRChatMirrorMode;
             float3 _VRChatMirrorCameraPos;
@@ -112,22 +121,31 @@ Shader "Lacuna/Flyover"
                 float4 clip_position = UnityObjectToClipPos(float4(hit_position - 0.5, 1));
 
                 depth = clip_position.z / clip_position.w;
+
+                bool left_depth_texel_flag = hit_coord.x == 255 - asuint(_DepthTex.Load(uint4(511 - hit_coord.z, 255 + hit_coord.y, 0, 0)));
+                bool right_depth_texel_flag = hit_coord.x == asuint(_DepthTex.Load(uint4(255 + hit_coord.z, hit_coord.y, 0, 0)));
+                bool bottom_depth_texel_flag = hit_coord.y == 255 - asuint(_DepthTex.Load(uint4(hit_coord.x, 255 - hit_coord.z, 0, 0)));
+                bool top_depth_texel_flag = hit_coord.y == asuint(_DepthTex.Load(uint4(767 - hit_coord.x, 511 - hit_coord.z, 0, 0)));
+                bool front_depth_texel_flag = hit_coord.z == 255 - asuint(_DepthTex.Load(uint4(hit_coord.x, 255 + hit_coord.y, 0, 0)));
+                bool back_depth_texel_flag = hit_coord.z == asuint(_DepthTex.Load(uint4(767 - hit_coord.x, hit_coord.y, 0, 0)));
                 
                 // Best results yet, there's a weird bug I am compensating for here. I still have to work that out...
-                float4 leftColour = _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.z, hit_coord.y) + uint2(256, 256) + uint2(0, 2), 0, 0));
-                float4 rightColour = _Udon_Lacuna_Color.Load(uint4(hit_coord.zy + uint2(256, 0) + uint2(0, 2), 0, 0));
-                float4 bottomColour = _Udon_Lacuna_Color.Load(uint4(uint2(hit_coord.x, 256 - hit_coord.z) + uint2(2, 0), 0, 0));
-                float4 topColour = _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, 256 - hit_coord.z) + uint2(512, 256) + uint2(-2, 0), 0, 0));
-                float4 frontColour = _Udon_Lacuna_Color.Load(uint4(hit_coord.xy + uint2(0, 256) + uint2(2, 2), 0, 0));
-                float4 backColour = _Udon_Lacuna_Color.Load(uint4(uint2(256 - hit_coord.x, hit_coord.y) + uint2(512, 0) + uint2(-2, 2), 0, 0));
+                // 03-10-2026 HAHAHA FIXED!
+                float4 leftColour = _Udon_Lacuna_Color.Load(uint4(511 - hit_coord.z, 255 + hit_coord.y, 0, 0));
+                float4 rightColour = _Udon_Lacuna_Color.Load(uint4(255 + hit_coord.z, hit_coord.y, 0, 0));
+                float4 bottomColour = _Udon_Lacuna_Color.Load(uint4(hit_coord.x, 255 - hit_coord.z, 0, 0));
+                float4 topColour = _Udon_Lacuna_Color.Load(uint4(767 - hit_coord.x, 511 - hit_coord.z, 0, 0));
+                float4 frontColour = _Udon_Lacuna_Color.Load(uint4(hit_coord.x, 255 + hit_coord.y, 0, 0));
+                float4 backColour = _Udon_Lacuna_Color.Load(uint4(767 - hit_coord.x, hit_coord.y, 0, 0));
 
-                float3 colour = floor(leftColour.a * 256) + 2 == 256 - hit_coord.x? leftColour.rgb :
-                                floor(rightColour.a * 256) - 2 == hit_coord.x ? rightColour.rgb :
-                                floor(bottomColour.a * 256) + 2 == 256 - hit_coord.y ? bottomColour.rgb :
-                                floor(topColour.a * 256) - 2 == hit_coord.y ? topColour.rgb :
-                                floor(frontColour.a * 256) == 256 - hit_coord.z ? frontColour.rgb :
-                                floor(backColour.a * 256) == hit_coord.z ? backColour.rgb :
+                float3 colour = left_depth_texel_flag ? leftColour.rgb :
+                                right_depth_texel_flag ? rightColour.rgb :
+                                bottom_depth_texel_flag ? bottomColour.rgb :
+                                top_depth_texel_flag ? topColour.rgb :
+                                front_depth_texel_flag ? frontColour.rgb :
+                                back_depth_texel_flag ? backColour.rgb :
                                 float3(1, 0, 1);
+                //colour = left_depth_texel_flag ? float3(1, 0, 0) : float3(1, 0, 1);   
 
                 return float4(colour, 1);
 

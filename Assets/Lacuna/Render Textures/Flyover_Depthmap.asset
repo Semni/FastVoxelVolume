@@ -6,7 +6,7 @@ CustomRenderTexture:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Flyover_Lacuna_Bitmask
+  m_Name: Flyover_Depthmap
   m_ImageContentsHash:
     serializedVersion: 2
     Hash: 00000000000000000000000000000000
@@ -14,12 +14,12 @@ CustomRenderTexture:
   m_DownscaleFallback: 0
   m_IsAlphaChannelOptional: 0
   serializedVersion: 5
-  m_Width: 64
-  m_Height: 64
+  m_Width: 768
+  m_Height: 512
   m_AntiAliasing: 1
   m_MipCount: -1
   m_DepthStencilFormat: 0
-  m_ColorFormat: 40
+  m_ColorFormat: 29
   m_MipMap: 0
   m_GenerateMips: 1
   m_SRGB: 0
@@ -35,10 +35,10 @@ CustomRenderTexture:
     m_WrapU: 1
     m_WrapV: 1
     m_WrapW: 1
-  m_Dimension: 3
+  m_Dimension: 2
   m_VolumeDepth: 64
   m_ShadowSamplingMode: 2
-  m_Material: {fileID: 2100000, guid: d31dd399e9600334ca1288ce5d5b7fa5, type: 2}
+  m_Material: {fileID: 2100000, guid: 6680d31cf94790d43b7726016db0cbd1, type: 2}
   m_InitSource: 0
   m_InitMaterial: {fileID: 0}
   m_InitColor: {r: 1, g: 1, b: 1, a: 1}
