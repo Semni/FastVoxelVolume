@@ -636,7 +636,7 @@ Transform:
   m_GameObject: {fileID: 1751825379}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 16.189999, y: 0, z: -7.13}
+  m_LocalPosition: {x: 10.657, y: 0, z: -7.13}
   m_LocalScale: {x: 0.509434, y: 1, z: 0.5625}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -764,7 +764,7 @@ Transform:
   m_GameObject: {fileID: 2063128436}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10.28, y: 0, z: -7.13}
+  m_LocalPosition: {x: 15.847, y: 0, z: -7.13}
   m_LocalScale: {x: 0.509434, y: 1, z: 0.5625}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -778,6 +778,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 755801746493182187, guid: 2a9561cf86815734e83b93a285b9f51b, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 6187486821380549289, guid: ecbb695095eec9b4b8d2dbcd45962ef5, type: 3}
     - target: {fileID: 5996332758761994012, guid: 2a9561cf86815734e83b93a285b9f51b, type: 3}
       propertyPath: m_Name
       value: FastVoxelVolume_Flyover

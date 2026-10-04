@@ -39,17 +39,23 @@ Shader "Lacuna/Flyover_Bitmask"
                     for (uint y = 0; y < 4; y++)
                         for (uint z = 0; z < 4; z++)
                         {
-                            uint3 loadTexcoord = uint3(x, y, z) + uint3(IN.localTexcoord.xyz * 64) * 4;
+                            uint3 loadTexcoord = uint3(x, y, z) + uint3(IN.localTexcoord.xyz * _CustomRenderTextureInfo.xyz) * 4;
 
-                            bool left_depth_texel_flag = loadTexcoord.x == 255 - asuint(_MainTex.Load(uint4(511 - loadTexcoord.z, 255 + loadTexcoord.y, 0, 0)));
-                            bool right_depth_texel_flag = loadTexcoord.x == asuint(_MainTex.Load(uint4(255 + loadTexcoord.z, loadTexcoord.y, 0, 0)));
-                            bool bottom_depth_texel_flag = loadTexcoord.y == 255 - asuint(_MainTex.Load(uint4(loadTexcoord.x, 255 - loadTexcoord.z, 0, 0)));
-                            bool top_depth_texel_flag = loadTexcoord.y == asuint(_MainTex.Load(uint4(767 - loadTexcoord.x, 511 - loadTexcoord.z, 0, 0)));
-                            bool front_depth_texel_flag = loadTexcoord.z == 255 - asuint(_MainTex.Load(uint4(loadTexcoord.x, 255 + loadTexcoord.y, 0, 0)));
-                            bool back_depth_texel_flag = loadTexcoord.z == asuint(_MainTex.Load(uint4(767 - loadTexcoord.x, loadTexcoord.y, 0, 0)));
-                            
-                            if(left_depth_texel_flag || right_depth_texel_flag || bottom_depth_texel_flag || top_depth_texel_flag || front_depth_texel_flag || back_depth_texel_flag)
+                            uint left_depth = asuint(_MainTex.Load(uint4((_CustomRenderTextureInfo.z * 8 - 1) - loadTexcoord.z, (_CustomRenderTextureInfo.y * 4 - 1) + loadTexcoord.y, 0, 0)));
+                            uint right_depth = asuint(_MainTex.Load(uint4((_CustomRenderTextureInfo.z * 4 - 1) + loadTexcoord.z, loadTexcoord.y, 0, 0)));
+                            uint bottom_depth = asuint(_MainTex.Load(uint4(loadTexcoord.x, (_CustomRenderTextureInfo.z * 4 - 1) - loadTexcoord.z, 0, 0)));
+                            uint top_depth = asuint(_MainTex.Load(uint4((_CustomRenderTextureInfo.x * 12 - 1) - loadTexcoord.x, (_CustomRenderTextureInfo.z * 8 - 1) - loadTexcoord.z, 0, 0)));
+                            uint front_depth = asuint(_MainTex.Load(uint4(loadTexcoord.x, (_CustomRenderTextureInfo.y * 4 - 1) + loadTexcoord.y, 0, 0)));
+                            uint back_depth = asuint(_MainTex.Load(uint4((_CustomRenderTextureInfo.x * 12 - 1) - loadTexcoord.x, loadTexcoord.y, 0, 0)));
+
+                            if (loadTexcoord.x == (_CustomRenderTextureInfo.x * 4 - 1) - left_depth && left_depth != 0 ||
+                                loadTexcoord.x == right_depth && right_depth != 0 ||
+                                loadTexcoord.y == (_CustomRenderTextureInfo.y * 4 - 1) - bottom_depth && bottom_depth != 0 ||
+                                loadTexcoord.y == top_depth && top_depth != 0 ||
+                                loadTexcoord.z == (_CustomRenderTextureInfo.z * 4 - 1) - front_depth && front_depth != 0 ||
+                                loadTexcoord.z == back_depth && back_depth != 0)
                                 insert(encode(x, y, z), bits_x, bits_y);
+
                         }
                 
                 return uint2(bits_x, bits_y);

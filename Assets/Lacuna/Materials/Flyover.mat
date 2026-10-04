@@ -72,11 +72,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OctaveTex_1:
-        m_Texture: {fileID: 8600000, guid: ca079552a7db33248b933e0714e06b4d, type: 2}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OctaveTex_2:
-        m_Texture: {fileID: 8600000, guid: 5fda5a81cfc4531438326fdde671c1e4, type: 2}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
@@ -92,7 +92,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Udon_Lacuna_Color:
-        m_Texture: {fileID: 8600000, guid: ff9ab1ca113051746aadf8533513f9f2, type: 2}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints:

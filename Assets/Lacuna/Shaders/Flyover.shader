@@ -5,7 +5,6 @@ Shader "Lacuna/Flyover"
         [NoScaleOffset] _MainTex ("Voxel Bitmask", 3D) = "white" {}
         //[NoScaleOffset] _OctaveTex_1 ("Octave 1", 3D) = "white" {}
         //[NoScaleOffset] _OctaveTex_2 ("Octave 2", 3D) = "white" {}
-        [NoScaleOffset] _Udon_Lacuna_Color ("Lacuna Colour", 2D) = "white" {}
         [NoScaleOffset] _DepthTex ("Flyover Depthmap", 2D) = "white" {}
     }
     SubShader
@@ -54,13 +53,17 @@ Shader "Lacuna/Flyover"
             //UNITY_DECLARE_TEX3D(_OctaveTex_2);
             //float4 _OctaveTex_2_TexelSize;
 
-            Texture2D _Udon_Lacuna_Color;
-
             Texture2D _DepthTex;
+
+            Texture2D _Udon_3DJ_Color;
+            SamplerState sampler_Udon_3DJ_Color;
+            float4 _Udon_3DJ_Color_TexelSize;
 
             Texture2D _Udon_3DJ_Depth;
             SamplerState sampler_Udon_3DJ_Depth;
             float4 _Udon_3DJ_Depth_TexelSize;
+
+            Texture2D _Udon_3DJ_Data;
 
             SamplerState _linear_clamp_sampler;
 
@@ -94,6 +97,16 @@ Shader "Lacuna/Flyover"
 
             fixed4 frag (v2f i, out float depth : SV_Depth) : SV_Target
             {
+                // Quick sanity check, don't bother running the traversal if 3DJ is not running
+                int scale = 0;
+                [unroll]
+                for(int j = 0; j < 20; j++)
+                {
+                    scale |= _Udon_3DJ_Data.Load(uint4(uint2(48 + 96 * j, 5), 0, 0)).y > 0.5 ? 1 << j : 0; 
+                }
+
+                if(scale == 0) discard;
+
                 // Prepare our variables
                 float3 hit_position;
                 uint3 hit_coord;
@@ -129,14 +142,12 @@ Shader "Lacuna/Flyover"
                 bool front_depth_texel_flag = hit_coord.z == 255 - asuint(_DepthTex.Load(uint4(hit_coord.x, 255 + hit_coord.y, 0, 0)));
                 bool back_depth_texel_flag = hit_coord.z == asuint(_DepthTex.Load(uint4(767 - hit_coord.x, hit_coord.y, 0, 0)));
                 
-                // Best results yet, there's a weird bug I am compensating for here. I still have to work that out...
-                // 03-10-2026 HAHAHA FIXED!
-                float4 leftColour = _Udon_Lacuna_Color.Load(uint4(511 - hit_coord.z, 255 + hit_coord.y, 0, 0));
-                float4 rightColour = _Udon_Lacuna_Color.Load(uint4(255 + hit_coord.z, hit_coord.y, 0, 0));
-                float4 bottomColour = _Udon_Lacuna_Color.Load(uint4(hit_coord.x, 255 - hit_coord.z, 0, 0));
-                float4 topColour = _Udon_Lacuna_Color.Load(uint4(767 - hit_coord.x, 511 - hit_coord.z, 0, 0));
-                float4 frontColour = _Udon_Lacuna_Color.Load(uint4(hit_coord.x, 255 + hit_coord.y, 0, 0));
-                float4 backColour = _Udon_Lacuna_Color.Load(uint4(767 - hit_coord.x, hit_coord.y, 0, 0));
+                float4 leftColour = _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, float2(1 - (hit_coord.z / 256.0), (hit_coord.y / 256.0)) * _Udon_3DJ_Color_TexelSize.xy * float2(320, 530) + _Udon_3DJ_Color_TexelSize.xy * float2(320, 530));
+                float4 rightColour = _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, float2((hit_coord.z / 256.0), (hit_coord.y / 256.0)) * _Udon_3DJ_Color_TexelSize.xy * float2(320, 530) + _Udon_3DJ_Color_TexelSize.xy * float2(320, 0));
+                float4 bottomColour = _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, float2((hit_coord.x / 256.0), 1 - (hit_coord.z / 256.0)) * _Udon_3DJ_Color_TexelSize.xy * float2(320, 530));
+                float4 topColour = _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, float2(1 - (hit_coord.x / 256.0), 1 - (hit_coord.z / 256.0)) * _Udon_3DJ_Color_TexelSize.xy * float2(320, 530) + _Udon_3DJ_Color_TexelSize.xy * float2(640, 530));
+                float4 frontColour = _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, float2((hit_coord.x / 256.0), (hit_coord.y / 256.0)) * _Udon_3DJ_Color_TexelSize.xy * float2(320, 530) + _Udon_3DJ_Color_TexelSize.xy * float2(0, 530));
+                float4 backColour = _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, float2(1 - (hit_coord.x / 256.0), (hit_coord.y / 256.0)) * _Udon_3DJ_Color_TexelSize.xy * float2(320, 530) + _Udon_3DJ_Color_TexelSize.xy * float2(640, 0));
 
                 float3 colour = left_depth_texel_flag ? leftColour.rgb :
                                 right_depth_texel_flag ? rightColour.rgb :
@@ -145,7 +156,6 @@ Shader "Lacuna/Flyover"
                                 front_depth_texel_flag ? frontColour.rgb :
                                 back_depth_texel_flag ? backColour.rgb :
                                 float3(1, 0, 1);
-                //colour = left_depth_texel_flag ? float3(1, 0, 0) : float3(1, 0, 1);   
 
                 return float4(colour, 1);
 

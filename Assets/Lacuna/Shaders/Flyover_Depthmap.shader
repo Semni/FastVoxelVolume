@@ -2,7 +2,7 @@ Shader "Lacuna/Flyover_Depthmap"
 {
     Properties
     {
-        _SobelOffset ("Sobel Filter Width", Range(0.5, 2.0)) = 1.0
+        _SobelOffset ("Sobel Filter Width", Range(0.5, 5.0)) = 1.0
         _SobelSensitivity ("Sobel Filter Sensitivity", Range(0.01, 0.2)) = 0.1
         _SampleThreshold ("Sampling Threshold", Range(0, 1)) = 0.02
     }
@@ -32,10 +32,9 @@ Shader "Lacuna/Flyover_Depthmap"
 
             uint frag (v2f_customrendertexture IN) : SV_Target
             {
-                uint depth = floor(_Udon_3DJ_Depth.Sample(_linear_clamp_sampler, IN.localTexcoord.xy).r * 255);
+                float depth = _Udon_3DJ_Depth.Sample(_linear_clamp_sampler, IN.localTexcoord.xy).r;
 
-                if(depth <= 5) depth = -1;
-                return SobelSampleDepth(_Udon_3DJ_Depth, _linear_clamp_sampler, IN.localTexcoord.xy, float3(_Udon_3DJ_Depth_TexelSize.xy, 0) * _SobelOffset) < _SobelSensitivity && depth >= 5 ? depth : -1;
+                return SobelSampleDepth(_Udon_3DJ_Depth, _linear_clamp_sampler, IN.localTexcoord.xy, float3(_Udon_3DJ_Depth_TexelSize.xy, 0) * _SobelOffset) < _SobelSensitivity && depth >= _SampleThreshold ? uint(depth * 255) : 0;
             }
             ENDHLSL
         }
