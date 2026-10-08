@@ -54,14 +54,7 @@ Shader "Lacuna/Flyover"
             //float4 _OctaveTex_2_TexelSize;
 
             Texture2D _DepthTex;
-
-            Texture2D _Udon_3DJ_Color;
-            SamplerState sampler_Udon_3DJ_Color;
-            float4 _Udon_3DJ_Color_TexelSize;
-
-            Texture2D _Udon_3DJ_Depth;
-            SamplerState sampler_Udon_3DJ_Depth;
-            float4 _Udon_3DJ_Depth_TexelSize;
+            float4 _DepthTex_TexelSize;
 
             Texture2D _Udon_3DJ_Data;
 
@@ -135,26 +128,19 @@ Shader "Lacuna/Flyover"
 
                 depth = clip_position.z / clip_position.w;
 
-                bool left_depth_texel_flag = hit_coord.x == 255 - asuint(_DepthTex.Load(uint4(511 - hit_coord.z, 255 + hit_coord.y, 0, 0)));
-                bool right_depth_texel_flag = hit_coord.x == asuint(_DepthTex.Load(uint4(255 + hit_coord.z, hit_coord.y, 0, 0)));
-                bool bottom_depth_texel_flag = hit_coord.y == 255 - asuint(_DepthTex.Load(uint4(hit_coord.x, 255 - hit_coord.z, 0, 0)));
-                bool top_depth_texel_flag = hit_coord.y == asuint(_DepthTex.Load(uint4(767 - hit_coord.x, 511 - hit_coord.z, 0, 0)));
-                bool front_depth_texel_flag = hit_coord.z == 255 - asuint(_DepthTex.Load(uint4(hit_coord.x, 255 + hit_coord.y, 0, 0)));
-                bool back_depth_texel_flag = hit_coord.z == asuint(_DepthTex.Load(uint4(767 - hit_coord.x, hit_coord.y, 0, 0)));
-                
-                float4 leftColour = _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, float2(1 - (hit_coord.z / 256.0), (hit_coord.y / 256.0)) * _Udon_3DJ_Color_TexelSize.xy * float2(320, 530) + _Udon_3DJ_Color_TexelSize.xy * float2(320, 530));
-                float4 rightColour = _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, float2((hit_coord.z / 256.0), (hit_coord.y / 256.0)) * _Udon_3DJ_Color_TexelSize.xy * float2(320, 530) + _Udon_3DJ_Color_TexelSize.xy * float2(320, 0));
-                float4 bottomColour = _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, float2((hit_coord.x / 256.0), 1 - (hit_coord.z / 256.0)) * _Udon_3DJ_Color_TexelSize.xy * float2(320, 530));
-                float4 topColour = _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, float2(1 - (hit_coord.x / 256.0), 1 - (hit_coord.z / 256.0)) * _Udon_3DJ_Color_TexelSize.xy * float2(320, 530) + _Udon_3DJ_Color_TexelSize.xy * float2(640, 530));
-                float4 frontColour = _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, float2((hit_coord.x / 256.0), (hit_coord.y / 256.0)) * _Udon_3DJ_Color_TexelSize.xy * float2(320, 530) + _Udon_3DJ_Color_TexelSize.xy * float2(0, 530));
-                float4 backColour = _Udon_3DJ_Color.Sample(sampler_Udon_3DJ_Color, float2(1 - (hit_coord.x / 256.0), (hit_coord.y / 256.0)) * _Udon_3DJ_Color_TexelSize.xy * float2(320, 530) + _Udon_3DJ_Color_TexelSize.xy * float2(640, 0));
+                uint4 left_texel = asuint(_DepthTex.Load(uint4((_MainTex_TexelSize.z * 8 - 1) - hit_coord.z, (_MainTex_TexelSize.z * 4 - 1) + hit_coord.y, 0, 0)));
+                uint4 right_texel = asuint(_DepthTex.Load(uint4((_MainTex_TexelSize.z * 4 - 1) + hit_coord.z, hit_coord.y, 0, 0)));
+                uint4 bottom_texel = asuint(_DepthTex.Load(uint4(hit_coord.x, (_MainTex_TexelSize.z * 4 - 1) - hit_coord.z, 0, 0)));
+                uint4 top_texel = asuint(_DepthTex.Load(uint4((_MainTex_TexelSize.z * 12 - 1) - hit_coord.x, (_MainTex_TexelSize.z * 8 - 1) - hit_coord.z, 0, 0)));
+                uint4 front_texel = asuint(_DepthTex.Load(uint4(hit_coord.x, (_MainTex_TexelSize.z * 4 - 1) + hit_coord.y, 0, 0)));
+                uint4 back_texel = asuint(_DepthTex.Load(uint4((_MainTex_TexelSize.z * 12 - 1) - hit_coord.x, hit_coord.y, 0, 0)));
 
-                float3 colour = left_depth_texel_flag ? leftColour.rgb :
-                                right_depth_texel_flag ? rightColour.rgb :
-                                bottom_depth_texel_flag ? bottomColour.rgb :
-                                top_depth_texel_flag ? topColour.rgb :
-                                front_depth_texel_flag ? frontColour.rgb :
-                                back_depth_texel_flag ? backColour.rgb :
+                float3 colour = hit_coord.x == (_MainTex_TexelSize.z * 4 - 1) - left_texel.a ? (float3)(left_texel.rgb) / 255 :        // Left
+                                hit_coord.x == right_texel.a ? (float3)(right_texel.rgb) / 255 :            // Right
+                                hit_coord.y == (_MainTex_TexelSize.z * 4 - 1) - bottom_texel.a ? (float3)(bottom_texel.rgb) / 255 :    // Bottom
+                                hit_coord.y == top_texel.a ? (float3)(top_texel.rgb) / 255 :                // Top
+                                hit_coord.z == (_MainTex_TexelSize.z * 4 - 1) - front_texel.a ? (float3)(front_texel.rgb) / 255 :      // Front
+                                hit_coord.z == back_texel.a ? (float3)(back_texel.rgb) / 255 :              // Back
                                 float3(1, 0, 1);
 
                 return float4(colour, 1);

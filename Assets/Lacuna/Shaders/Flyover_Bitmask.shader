@@ -41,12 +41,12 @@ Shader "Lacuna/Flyover_Bitmask"
                         {
                             uint3 loadTexcoord = uint3(x, y, z) + uint3(IN.localTexcoord.xyz * _CustomRenderTextureInfo.xyz) * 4;
 
-                            uint left_depth = asuint(_MainTex.Load(uint4((_CustomRenderTextureInfo.z * 8 - 1) - loadTexcoord.z, (_CustomRenderTextureInfo.y * 4 - 1) + loadTexcoord.y, 0, 0)));
-                            uint right_depth = asuint(_MainTex.Load(uint4((_CustomRenderTextureInfo.z * 4 - 1) + loadTexcoord.z, loadTexcoord.y, 0, 0)));
-                            uint bottom_depth = asuint(_MainTex.Load(uint4(loadTexcoord.x, (_CustomRenderTextureInfo.z * 4 - 1) - loadTexcoord.z, 0, 0)));
-                            uint top_depth = asuint(_MainTex.Load(uint4((_CustomRenderTextureInfo.x * 12 - 1) - loadTexcoord.x, (_CustomRenderTextureInfo.z * 8 - 1) - loadTexcoord.z, 0, 0)));
-                            uint front_depth = asuint(_MainTex.Load(uint4(loadTexcoord.x, (_CustomRenderTextureInfo.y * 4 - 1) + loadTexcoord.y, 0, 0)));
-                            uint back_depth = asuint(_MainTex.Load(uint4((_CustomRenderTextureInfo.x * 12 - 1) - loadTexcoord.x, loadTexcoord.y, 0, 0)));
+                            uint left_depth = asuint(_MainTex.Load(uint4((_CustomRenderTextureInfo.z * 8 - 1) - loadTexcoord.z, (_CustomRenderTextureInfo.y * 4 - 1) + loadTexcoord.y, 0, 0))).a;
+                            uint right_depth = asuint(_MainTex.Load(uint4((_CustomRenderTextureInfo.z * 4 - 1) + loadTexcoord.z, loadTexcoord.y, 0, 0))).a;
+                            uint bottom_depth = asuint(_MainTex.Load(uint4(loadTexcoord.x, (_CustomRenderTextureInfo.z * 4 - 1) - loadTexcoord.z, 0, 0))).a;
+                            uint top_depth = asuint(_MainTex.Load(uint4((_CustomRenderTextureInfo.x * 12 - 1) - loadTexcoord.x, (_CustomRenderTextureInfo.z * 8 - 1) - loadTexcoord.z, 0, 0))).a;
+                            uint front_depth = asuint(_MainTex.Load(uint4(loadTexcoord.x, (_CustomRenderTextureInfo.y * 4 - 1) + loadTexcoord.y, 0, 0))).a;
+                            uint back_depth = asuint(_MainTex.Load(uint4((_CustomRenderTextureInfo.x * 12 - 1) - loadTexcoord.x, loadTexcoord.y, 0, 0))).a;
 
                             if (loadTexcoord.x == (_CustomRenderTextureInfo.x * 4 - 1) - left_depth && left_depth != 0 ||
                                 loadTexcoord.x == right_depth && right_depth != 0 ||
